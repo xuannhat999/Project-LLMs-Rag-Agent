@@ -1,4 +1,4 @@
-**Requiments** 
+**Requirements** 
 - Ollama
 - Python
 
@@ -28,6 +28,7 @@
   ```bash
   streamlit run app.py
   ```
+
 
 
 
