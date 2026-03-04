@@ -2,7 +2,8 @@
 - Ollama
 - Python
 
-**1. Clone Repo:**
+**1. Clone Repo:**  
+  
 **2. Create & Activate venv**
    ```bash
    # Window
@@ -17,7 +18,7 @@
 **3. Install Python packages**  
    ! Lưu ý: nếu máy có GPU rời thì edit file requirements.txt, bỏ dòng --extra-index-url https://download.pytorch.org/whl/cpu và +cpu ở package 'torch' trước khi cài dependencies
    ```bash
-   pip install -r requirents.txt
+   pip install -r requirments.txt
    ```
 **4. Pull model Ollama**
    ```bash
@@ -27,4 +28,5 @@
   ```bash
   streamlit run app.py
   ```
+
 
