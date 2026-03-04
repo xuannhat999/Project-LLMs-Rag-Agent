@@ -1,10 +1,14 @@
 **Requirements** 
 - Ollama
 - Python
-
+- GitLFS  
+  Cài git-lfs nếu chưa có
+  ```bash
+  git lfs install
+  ```
 **1. Clone Repo:**  
-  
-**2. Create & Activate venv**
+**2. Create & Activate venv**  
+      Vào thư mục project    
    ```bash
    # Window
    python -m venv venv
@@ -28,6 +32,7 @@
   ```bash
   streamlit run app.py
   ```
+
 
 
 
