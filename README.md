@@ -3,10 +3,6 @@
 - Python
 
 **1. Clone Repo:**
-   ```bash
-   git clone git@github.com:xuannhat999/Project-LLMs-Rag-Agent.git
-   cd Project-LLMs-Rag-Agent
-   ```
 **2. Create & Activate venv**
    ```bash
    # Window
@@ -31,3 +27,4 @@
   ```bash
   streamlit run app.py
   ```
+
