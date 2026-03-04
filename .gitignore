@@ -1,0 +1,10 @@
+# Environment
+.env
+venv*
+.venv*
+pyrightconfig.json
+# Database
+*.db
+*.sqlite
+
+__pycache__/
