@@ -1,0 +1,26 @@
+[
+    {
+        "role": "user",
+        "content": "yêu cầu bài 1 trong BTQuaTrinh là gì "
+    },
+    {
+        "role": "assistant",
+        "content": "Bài 1 yêu cầu xây dựng ứng dụng theo dõi giá vàng và quy đổi sang tiền VND. Ứng dụng cần lấy giá vàng từ nguồn dữ liệu, cho phép người dùng nhập số lượng để xem giá trị ngay lập tức. Cần hỗ trợ nhiều loại vàng/đơn vị và lưu lịch sử tra cứu cá nhân. Ngoài ra, ứng dụng phải hiển thị biểu đồ biến động giá trong 7 ngày gần nhất để người dùng đưa ra quyết định mua/bán."
+    },
+    {
+        "role": "user",
+        "content": "yêu cầu bài 2 trong BTQuaTrinh là gì "
+    },
+    {
+        "role": "assistant",
+        "content": "Yêu cầu chính của bài 2 trong Chương trình Khai Tạo Phần Mềm nâng cao 2026 adalah:\n\n• Tự động lấy vị trí hiện tại để hiển thị thông tin thời tiết.\n• Thêm dự báo thời tiết theo giờ & theo ngày.\n• Hiển thị bản đồ thời tiết với Google Maps (mây, nhiệt độ, lượng mưa).\n• Tích hợp thông báo khi thời tiết xấu hoặc nhiệt độ vượt ngưỡng."
+    },
+    {
+        "role": "user",
+        "content": "yêu cầu bài 3 trong BTQuaTrinh là gì "
+    },
+    {
+        "role": "assistant",
+        "content": "Yêu cầu chính của bài 3 trong BQTMOBILE NÂNG CAO 2026 adalah:\n\n- Điều khiển đèn thông minh bằng cách vẫy tay.\n- Điều chỉnh âm lượng bằng cách nghiêng điện thoại."
+    }
+]
