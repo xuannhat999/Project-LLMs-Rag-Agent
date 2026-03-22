@@ -1,23 +1,35 @@
 import streamlit as st
-from langchain_community.llms import Ollama
-from langchain_community.embeddings import (
-    HuggingFaceEmbeddings,
-)  # Bản cập nhật mới của LangChain
+from langchain_ollama import OllamaLLM
+
+
+def get_prompt_template(user_input):
+    vn_chars = "àáảãạăâèéêìíòóôơùúưỳýđịĩủũụừứặắằếềốồớờộỗỡ"
+    # Kiểm tra nếu có bất kỳ ký tự tiếng Việt đặc trưng nào
+    is_vn = any(c in user_input.lower() for c in vn_chars)
+
+    if is_vn:
+        return """Sử dụng ngữ cảnh sau đây để trả lời câu hỏi.
+Nếu bạn không biết, chỉ cần nói là bạn không biết.
+Trả lời ngắn gọn (3-4 câu) BẮT BUỘC bằng tiếng Việt.
+Ngữ cảnh: {context}
+Câu hỏi: {user_input}
+Trả lời: """
+
+    return """Use the following context to answer the question.
+If you don't know the answer, just say you don't know.
+Keep answer concise (3-4 sentences).
+Context: {context}
+Question: {user_input}
+Answer: """
 
 
 @st.cache_resource
-def get_embedder():
-    # Khởi tạo Embedder chạy trên CPU cho Pipeline
-    model_name = "sentence-transformers/paraphrase-multilingual-mpnet-base-v2"
-    model_kwargs = {"device": "cpu"}
-    encode_kwargs = {"normalize_embeddings": True}
-
-    return HuggingFaceEmbeddings(
-        model_name=model_name, model_kwargs=model_kwargs, encode_kwargs=encode_kwargs
-    )
-
-
-@st.cache_resource
-def get_llm():
+def get_model():
     # Khởi tạo LLM từ Ollama (Local)
-    return Ollama(model="qwen2.5:7b", temperature=0.7, top_p=0.9, repeat_penalty=1.1)
+    return OllamaLLM(
+        model="qwen2.5:3b",
+        num_thread=4,  # Thử 2 hoặc 4
+        num_ctx=2048,
+        temperature=0.1,
+        repeat_penalty=1.1,
+    )
