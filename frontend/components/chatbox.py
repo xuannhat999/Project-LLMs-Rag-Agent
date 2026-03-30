@@ -39,6 +39,74 @@ def load_latest_chat_history():
 
 @st.fragment
 def render_chatbox(model):
+    st.markdown("""
+    <style>
+    /* 1. ẨN AVATAR */
+    [data-testid="stChatMessageAvatarUser"], 
+    [data-testid="stChatMessageAvatarAssistant"] {
+        display: none !important;
+    }
+
+    /* 2. CẤU HÌNH CHUNG (Không để border hay background ở đây) */
+    [data-testid="stChatMessage"] {
+        background-color: transparent !important;
+        display: flex !important;
+        width: 100% !important;
+        padding: 0px !important;
+        margin-bottom: 20px !important;
+    }
+
+    [data-testid="stChatMessage"] div[data-testid="stMarkdownContainer"] {
+        font-family: 'Inter', sans-serif;
+        line-height: 1.6;
+        max-width: 80%; /* Giới hạn độ rộng để lệch rõ hơn */
+    }
+
+    /* 3. XỬ LÝ RIÊNG CHO USER (Có khung, có viền, lệch phải) */
+    [data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarUser"]) {
+        flex-direction: row-reverse !important;
+    }
+    
+    [data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarUser"]) div[data-testid="stMarkdownContainer"] {
+        background-color: rgba(255, 255, 255, 0.08) !important; /* Nền nhạt */
+        border: 1px solid rgba(255, 255, 255, 0.15) !important; /* Viền nhạt */
+        color: white !important;
+        border-radius: 25px !important;
+        padding: 12px 18px !important;
+        margin-left: auto !important;
+    }
+
+    /* 4. XỬ LÝ RIÊNG CHO ASSISTANT (Xóa sạch viền và nền) */
+    [data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarAssistant"]) {
+        flex-direction: row !important;
+    }
+
+    [data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarAssistant"]) div[data-testid="stMarkdownContainer"] {
+        background-color: transparent !important; /* Xóa nền */
+        border: none !important; /* XÓA VIỀN TUYỆT ĐỐI */
+        color: #ececec !important;
+        padding: 10px 0px !important; /* Padding 0 để sát lề trái */
+        margin-right: auto !important;
+        max-width: 100% !important;
+        box-shadow: none !important; /* Xóa bóng đổ nếu có */
+    }
+    
+    /* Chỉnh màu chữ trong p tag cho chắc chắn */
+    [data-testid="stMarkdownContainer"] p {
+        color: white !important;
+        margin-bottom: 0px !important;
+    }
+                
+    /* 5. CHỈNH Ô NHẬP CÂU HỎI (CHAT INPUT) */
+    [data-testid="stChatInput"] {
+        padding-bottom: 20px !important; /* Tạo khoảng trống phía dưới cùng */
+    }
+
+   
+    
+
+    </style>
+""", unsafe_allow_html=True)
     vector_db = st.session_state.get("vector_db")
 
     # mode_label = "📚 RAG Mode" if vector_db else "🌐 General Mode"
@@ -48,9 +116,12 @@ def render_chatbox(model):
         st.session_state.messages = load_latest_chat_history()
     for msg in st.session_state.messages:
         with st.chat_message(msg["role"]):
-            st.markdown(msg["content"])
+            if msg["role"] == "user":
+                st.markdown(f'<p style="color: white;">{msg["content"]}</p>', unsafe_allow_html=True)
+            else:
+                st.markdown(msg["content"])
 
-    if prompt := st.chat_input("Nhập câu hỏi..."):
+    if prompt := st.chat_input("Nhập câu hỏi...",max_chars=500):
         vector_db = st.session_state.get("vector_db")
         if vector_db is not None:
             num_vectors = vector_db.index.ntotal
