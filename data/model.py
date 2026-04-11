@@ -25,10 +25,9 @@ Answer: """
 
 @st.cache_resource
 def get_model():
-    # Khởi tạo LLM từ Ollama (Local)
     return OllamaLLM(
-        model="qwen2.5:3b",
-        num_thread=4,  # Thử 2 hoặc 4
+        model="gemma4:e2b",
+        num_thread=8,
         num_ctx=2048,
         temperature=0.1,
         repeat_penalty=1.1,
