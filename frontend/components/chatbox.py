@@ -114,44 +114,49 @@ def render_chatbox(model):
 
     if "messages" not in st.session_state:
         st.session_state.messages = load_latest_chat_history()
-    for msg in st.session_state.messages:
-        with st.chat_message(msg["role"]):
-            if msg["role"] == "user":
-                st.markdown(f'<p style="color: white;">{msg["content"]}</p>', unsafe_allow_html=True)
-            else:
-                if "rag_content" in msg and "corag_content" in msg:
-                    col1, col2 = st.columns(2)
-                    col1.info(f"**📍 Vector RAG:**\n\n{msg['rag_content']}")
-                    col2.success(f"**✨ CoRAG (Verified):**\n\n{msg['corag_content']}")
-                else:
-                    st.markdown(msg.get("content",""))
 
-    if user_input := st.chat_input("Nhập câu hỏi...",max_chars=500):
+    chat_placeholder = st.container()
+    user_input = st.chat_input("Nhập câu hỏi...", max_chars=500)
+    with chat_placeholder:
+        for msg in st.session_state.messages:
+            with st.chat_message(msg["role"]):
+                if msg["role"] == "user":
+                    st.markdown(f'<p style="color: white;">{msg["content"]}</p>', unsafe_allow_html=True)
+                else:
+                    if "rag_content" in msg and "corag_content" in msg:
+                        col1, col2 = st.columns(2)
+                        col1.info(f"**📍 Vector RAG:**\n\n{msg['rag_content']}")
+                        col2.success(f"**✨ CoRAG (Verified):**\n\n{msg['corag_content']}")
+                    else:
+                        st.markdown(msg.get("content",""))
+
+    if user_input:
+        with chat_placeholder:
         # Hiển thị câu hỏi User
-        st.session_state.messages.append({"role": "user", "content": user_input})
-        with st.chat_message("user"):
-            st.markdown(user_input)
+            st.session_state.messages.append({"role": "user", "content": user_input})
+            with st.chat_message("user"):
+                st.markdown(user_input)
 
 
         # Trả lời của Assistant
-        with st.chat_message("assistant"):
-            with st.spinner("Đang truy vấn song song..."):
+            with st.chat_message("assistant"):
+                with st.spinner("Đang truy vấn song song..."):
                 # GỌI HÀM: Truyền đủ 4 tham số
                 # Kết quả trả về là: {"vector": "...", "graph": "..."}
-                results = process_query(vector_db, model, user_input)
+                    results = process_query(vector_db, model, user_input)
                 
                 # HIỂN THỊ CHIA CỘT NGAY LẬP TỨC
-                col1, col2 = st.columns(2)
-                with col1:
-                    st.info(f"**📍 Vector RAG:**\n\n{results['rag']}")
-                with col2:
-                    corag_text = results['corag'] if results['corag'] else "Không đủ dữ liệu tin cậy để đánh giá."
-                    st.success(f"**✨ CoRAG (Verified):**\n\n{corag_text}")
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        st.info(f"**📍 Vector RAG:**\n\n{results['rag']}")
+                    with col2:
+                        corag_text = results['corag'] if results['corag'] else "Không đủ dữ liệu tin cậy để đánh giá."
+                        st.success(f"**✨ CoRAG (Verified):**\n\n{corag_text}")
                 
                 # LƯU VÀO HISTORY (Sử dụng cấu trúc mới)
-                st.session_state.messages.append({
-                    "role": "assistant",
-                    "rag_content": results['rag'],
-                    "corag_content": results['corag']
-                })
-                save_chat_history(st.session_state.messages)
+                    st.session_state.messages.append({
+                        "role": "assistant",
+                        "rag_content": results['rag'],
+                        "corag_content": results['corag']
+                    })
+                    save_chat_history(st.session_state.messages)
