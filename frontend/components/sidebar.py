@@ -1,6 +1,6 @@
 import streamlit as st
 import os
-from data.chain_rag import process_documents_pdf
+from data.chain_rag import process_documents
 
 
 def render_sidebar(embedder):
@@ -58,7 +58,7 @@ div.stButton > button:hover {
     if current_files_id != last_files_id:
         if uploaded_files:
             with st.sidebar.status("🔄"):
-                st.session_state.vector_db = process_documents_pdf(
+                st.session_state.vector_db = process_documents(
                     uploaded_files, embedder
                 )
                 st.session_state.last_files_id = current_files_id

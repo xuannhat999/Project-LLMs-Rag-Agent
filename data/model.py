@@ -26,7 +26,7 @@ Answer: """
 @st.cache_resource
 def get_model():
     return OllamaLLM(
-        model="gemma4:e2b",
+        model="qwen2.5:3b",
         num_thread=8,
         num_ctx=2048,
         temperature=0.1,
