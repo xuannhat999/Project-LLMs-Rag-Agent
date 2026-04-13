@@ -16,7 +16,7 @@ from data.chain_corag import evaluate
 def get_retriever(vector):
     retriever = vector.as_retriever(
         search_type="similarity",
-        search_kwargs={"k": 3},
+        search_kwargs={"k": 5},
     )
     return retriever
 
@@ -116,6 +116,7 @@ def process_query(vector_db, model, user_input):
         logger.info(f"Retrieved time: {retrieved_time}")
 
         def process_rag():
+            logger.info("Started procces RAG !")
             context = "\n\n".join([doc.page_content for doc in related_docs])
             prompt_text = get_prompt_template(user_input).format(
                 context=context, user_input=user_input
@@ -127,12 +128,16 @@ def process_query(vector_db, model, user_input):
             logger.info(f"Response (RAG): {results['rag']}")
 
         def proccess_corag():
-            score, validated_docs = evaluate(user_input, related_docs, model)
+            logger.info("Started procces CoRAG")
+            score, validated_docs = evaluate(user_input, related_docs)
+            evaluate_time = time.time() - start_time
+            logger.info(f"Evaluate time (CoRAG): {evaluate_time}")
             if score == "success":
                 context = "\n\n".join([d for d in validated_docs])
                 prompt = get_prompt_template(user_input).format(
                     context=context, user_input=user_input
                 )
+                logger.info(f"CoRAG Prompt: \n{prompt}")
                 results["corag"] = model.invoke(prompt)
 
                 response_time_corag = time.time() - start_time

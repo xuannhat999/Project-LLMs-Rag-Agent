@@ -1,9 +1,15 @@
 import streamlit as st
 import os
+import time
+import logging
 from data.chain_rag import process_documents
 
 
 def render_sidebar(embedder):
+
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger(__name__)
+
     st.sidebar.title("📁 Quản lý tài liệu")
 
     st.markdown(
@@ -57,11 +63,12 @@ div.stButton > button:hover {
     # ------------------------
     if current_files_id != last_files_id:
         if uploaded_files:
+            start_time = time.time()
             with st.sidebar.status("🔄"):
-                st.session_state.vector_db = process_documents(
-                    uploaded_files, embedder
-                )
+                st.session_state.vector_db = process_documents(uploaded_files, embedder)
                 st.session_state.last_files_id = current_files_id
+            procces_pdf_time = time.time() - start_time
+            logger.info(f"PDF Proccessing time: {procces_pdf_time}")
         else:
             st.session_state.vector_db = None
             st.session_state.last_files_id = ""

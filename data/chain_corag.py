@@ -1,47 +1,32 @@
-from langchain_core.prompts import PromptTemplate
-from langchain_core.output_parsers import JsonOutputParser
+from sentence_transformers import CrossEncoder
+import logging
+import streamlit as st
 
 
-def evaluate(query, retrieved_docs, model):
+@st.cache_resource
+def get_encoder():
 
-    eval_prompt = PromptTemplate(
-        template="""Bạn là một giám khảo chấm điểm dữ liệu. 
-NHIỆM VỤ: Kiểm tra đoạn văn bản có chứa thông tin để trả lời câu hỏi không.
+    return CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2", device="cpu")
 
-Câu hỏi: {query}
-Đoạn văn bản: {context}
 
-QUY ĐỊNH TRẢ LỜI:
-1. Nếu có thông tin, trả về: {{"relevance": "yes"}}
-2. Nếu không liên quan, trả về: {{"relevance": "no"}}
-3. Chỉ trả về duy nhất định dạng JSON, không giải thích thêm, không chào hỏi.
-""",
-        input_variables=["query", "context"],
-    )
+def evaluate(query, retrieved_docs):
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger(__name__)
 
-    # Giả định bạn đã khởi tạo llm_evaluator (model nhẹ)
-    eval_chain = eval_prompt | model | JsonOutputParser()
+    cross_encoder = get_encoder()
+    # Tạo các cặp (query, doc)
+    pairs = [[query, doc.page_content] for doc in retrieved_docs]
 
+    # Dự đoán điểm số cho tất cả các cặp cùng lúc (rất nhanh)
+    scores = cross_encoder.predict(pairs)
+    logger.info(f"Score (CoRAG): {scores}")
     validated_context = []
-    need_fallback = False
+    success = False
 
-    for doc in retrieved_docs:
-        # Chấm điểm từng đoạn từ VectorDB
-        result = eval_chain.invoke({"query": query, "context": doc.page_content})
+    for i, score in enumerate(scores):
+        if float(score) > 0.1:
+            logger.info(f"Validated context with score: {score}")
+            validated_context.append(retrieved_docs[i].page_content)
+            success = True
 
-        if result["relevance"] == "yes":
-            validated_context.append(doc.page_content)
-        elif result["relevance"] == "maybe":
-            # Nếu mơ hồ, có thể giữ lại nhưng đánh dấu cần bổ sung
-            validated_context.append(doc.page_content)
-            need_fallback = True
-        else:
-            # Loại bỏ đoạn không liên quan (Incorrect)
-            continue
-
-    # 4. Xử lý logic rẽ nhánh
-    if not validated_context or need_fallback:
-        # Trường hợp 2: Dữ liệu trống hoặc mơ hồ -> Kích hoạt Fallback
-        return "fallback_required", validated_context
-
-    return "success", validated_context
+    return ("success" if success else "fallback_required"), validated_context

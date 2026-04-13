@@ -27,8 +27,7 @@ Answer: """
 def get_model():
     return OllamaLLM(
         model="qwen2.5:3b",
-        num_thread=8,
+        num_thread=10,
         num_ctx=2048,
         temperature=0.1,
-        repeat_penalty=1.1,
     )
