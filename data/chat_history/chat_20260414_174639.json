@@ -1,0 +1,97 @@
+[
+    {
+        "role": "user",
+        "content": "yêu cầu bài 1 trong BTQuaTrinh là gì "
+    },
+    {
+        "role": "assistant",
+        "content": "Bài 1 yêu cầu xây dựng ứng dụng theo dõi giá vàng và quy đổi sang tiền VND. Ứng dụng cần lấy giá vàng từ nguồn dữ liệu, cho phép người dùng nhập số lượng để xem giá trị ngay lập tức. Cần hỗ trợ nhiều loại vàng/đơn vị và lưu lịch sử tra cứu cá nhân. Ngoài ra, ứng dụng phải hiển thị biểu đồ biến động giá trong 7 ngày gần nhất để người dùng đưa ra quyết định mua/bán."
+    },
+    {
+        "role": "user",
+        "content": "tài liệu này nói về vấn đề gì"
+    },
+    {
+        "role": "assistant",
+        "rag_content": null,
+        "corag_content": null
+    },
+    {
+        "role": "user",
+        "content": "tài liệu này nói về vấn đề gì"
+    },
+    {
+        "role": "assistant",
+        "rag_content": null,
+        "corag_content": null
+    },
+    {
+        "role": "user",
+        "content": "tài liệu nói về vấn đề gì"
+    },
+    {
+        "role": "assistant",
+        "rag_content": "Ngữ cảnh này cung cấp thông tin giáo dục và kinh nghiệm làm việc của Nguyen Le Quan. Nó không nói rõ về một vấn đề cụ thể nào, mà chỉ là một tóm tắt ngắn gọn về các dự án học thuật và công việc của anh ấy.",
+        "corag_content": "Tài liệu này cung cấp thông tin giáo dục và kỹ năng của Nguyen Le Quan. Nó mô tả các khóa học mà anh ấy đã tham gia, điểm số GPA, các giải thưởng, kỹ năng ngôn ngữ và công cụ, cũng như một số dự án và kinh nghiệm làm việc liên quan đến lĩnh vực Công nghệ Thông tin."
+    },
+    {
+        "role": "user",
+        "content": "tài liệu này nói về vấn đề gì"
+    },
+    {
+        "role": "assistant",
+        "content": "So sánh RAG & CoRAG",
+        "rag_content": "Dữ liệu này mô tả thông tin giáo dục và kỹ năng của một người tên Nguyen Le Quan. Nó bao gồm danh sách các khóa học đã hoàn thành, điểm số GPA, giải thưởng, kỹ năng ngôn ngữ và công cụ, cũng như thông tin về các dự án học thuật và cá nhân.",
+        "corag_content": "Đây là thông tin giáo dục và kỹ năng của một người tên Nguyen Le Quan. Nó không nói về bất kỳ vấn đề cụ thể nào, mà chỉ mô tả các khóa học, điểm số, giải thưởng, kỹ năng và dự án công việc của anh ta."
+    },
+    {
+        "role": "user",
+        "content": "GPA hiện tại của người này là bao nhiêu"
+    },
+    {
+        "role": "assistant",
+        "content": "So sánh RAG & CoRAG",
+        "rag_content": "Người này hiện đang có GPA là 3.04.",
+        "corag_content": "Người này hiện đang có GPA là 3.04."
+    },
+    {
+        "role": "user",
+        "content": "tài liệu này nói về vấn đề gì"
+    },
+    {
+        "role": "assistant",
+        "content": "So sánh RAG & CoRAG",
+        "rag_content": "Tài liệu này nói về bài tập lớn về kiểm thử ứng dụng đăng nhập và quản lý sản phẩm cho dự án FloginFE_BE, yang merupakan phần mềm full-stack.",
+        "corag_content": "Tài liệu này nói về bài tập lớn về kiểm thử ứng dụng FloginFE_BE, yang merupakan phần mềm web full-stack. Mục tiêu của dự án là áp dụng kỹ thuật kiểm thử phần mềm một cách hệ thống và toàn diện."
+    },
+    {
+        "role": "user",
+        "content": "tài liệu này nói về vấn đề gì"
+    },
+    {
+        "role": "assistant",
+        "content": "So sánh RAG & CoRAG",
+        "rag_content": "Xin lỗi, nhưng bạn chưa cung cấp nội dung hoặc tài liệu cụ thể mà bạn muốn tôi phân tích. Để giúp đỡ bạn tốt hơn, nếu bạn có thể cung cấp thêm thông tin như nội dung của tài liệu đó là gì (ví dụ: một bài báo, sách, trang web, v.v.), tôi sẽ rất vui lòng cố gắng phân tích và giải thích cho bạn về vấn đề mà nó đề cập.",
+        "corag_content": "Không đủ dữ liệu tin cậy để đánh giá."
+    },
+    {
+        "role": "user",
+        "content": "tài liệu này nói về vấn đề gì"
+    },
+    {
+        "role": "assistant",
+        "content": "So sánh RAG & CoRAG",
+        "rag_content": "Xin lỗi, nhưng bạn chưa cung cấp nội dung hoặc tiêu đề của tài liệu mà bạn muốn tôi phân tích. Để tôi có thể giúp bạn hiểu về nội dung của tài liệu đó, bạn cần cung cấp thêm thông tin như:\n\n1. Tiêu đề của tài liệu.\n2. Nội dung chính của tài liệu (nếu có).\n3. Mục đích hoặc đối tượng mà tài liệu hướng đến.\n\nSau khi nhận được thông tin này, tôi sẽ cố gắng phân tích và giúp bạn hiểu về nội dung của tài liệu đó.",
+        "corag_content": "Không đủ dữ liệu tin cậy để đánh giá."
+    },
+    {
+        "role": "user",
+        "content": "tài liệu trên nói về nội dung gì"
+    },
+    {
+        "role": "assistant",
+        "content": "So sánh RAG & CoRAG",
+        "rag_content": "Tài liệu trên đề cập đến các chính sách và quy định liên quan đến phát triển giáo dục công nghệ, đổi mới sáng tạo và chuyển đổi số trong khu vực kinh tế. Nó cũng bao gồm các biện pháp về thuế cho doanh nghiệp, đặc biệt là về việc xác định thu nhập và chi phí đầu tư. Ngoài ra, tài liệu này còn đề cập đến việc khuyến khích doanh nghiệp tham gia nghiên cứu và phát triển, đồng thời cũng có quy định về quản lý quan hệ giữa doanh nghiệp với các cấp chính quyền.",
+        "corag_content": "Không đủ dữ liệu tin cậy để đánh giá."
+    }
+]
