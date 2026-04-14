@@ -41,14 +41,13 @@ def process_documents(uploaded_files, embedder):
     for uploaded_file in uploaded_files:
         # Lấy đuôi file thực tế ( .pdf hoặc .docx )
         file_extension = os.path.splitext(uploaded_file.name)[1].lower()
-        
+
         with tempfile.NamedTemporaryFile(delete=False, suffix=file_extension) as tmp:
             tmp.write(uploaded_file.getbuffer())
             tmp_path = tmp.name
 
         try:
-            # Hàm load_document này cần được cập nhật để đọc được cả docx
-            docs = load_document(tmp_path) 
+            docs = load_document(tmp_path)
             for doc in docs:
                 doc.metadata["source"] = uploaded_file.name
             chunk = split_text(docs)
@@ -60,7 +59,6 @@ def process_documents(uploaded_files, embedder):
     if all_splitted_docs:
         print(f"🚀 Đang tạo Vector DB cho {len(all_splitted_docs)} đoạn văn bản...")
         return FAISS.from_documents(all_splitted_docs, embedder)
-    return None
     if not uploaded_files:
         return None
 
