@@ -10,12 +10,8 @@ HISTORY_DIR = os.path.expanduser("data/chat_history/")
 
 
 def render_sidebar(embedder):
-
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)
-
-    st.sidebar.title("📁 Quản lý tài liệu")
-
     #     st.markdown(
     #         """
     # <style>
@@ -29,67 +25,8 @@ def render_sidebar(embedder):
     # </style>""",
     #     unsafe_allow_html=True,
     # )
-    if st.session_state.get("delete_docs"):
-        st.session_state.vector_db = None
-        st.session_state.last_files_id = ""
-        if "uploader_key" not in st.session_state:
-            st.session_state.uploader_key = 0
-        st.session_state.uploader_key += 1
-        st.session_state["delete_docs"] = None
-        st.rerun()
-
-    if st.session_state.get("delete_chat_his"):
-        st.session_state.messages = None
-        files = glob.glob("data/chat_history/*")
-        for f in files:
-            if os.path.isfile(f):
-                os.remove(f)
-        st.session_state["delete_chat_his"] = None
-        st.rerun()
-
-    if st.sidebar.button("Xóa tất cả tài liệu", use_container_width=True):
-        confirm_dialog("Bạn có chắc chắn muốn xóa tất cả tài liệu", "delete_docs")
-
     if st.sidebar.button("Xóa lịch sử chat", use_container_width=True):
         confirm_dialog("Bạn có chắc chắn muốn xóa lịch sử chat", "delete_chat_his")
-
-    if "uploader_key" not in st.session_state:
-        st.session_state.uploader_key = 0
-
-    uploaded_files = st.sidebar.file_uploader(
-        "Upload Files",
-        type=["pdf", "doc", "docx"],
-        accept_multiple_files=True,
-        key=f"uploader_{st.session_state.uploader_key}",
-    )
-
-    current_files_id = (
-        str([(f.name, f.size) for f in uploaded_files]) if uploaded_files else ""
-    )
-    last_files_id = st.session_state.get("last_files_id", "")
-
-    # st.sidebar.divider()
-    # st.sidebar.write("🔍 **Debug Info:**")
-    # st.sidebar.write(
-    #     f"- ID hiện tại: `{current_files_id[:100]}...`"
-    #     if current_files_id
-    #     else "- ID hiện tại: Trống"
-    # )
-    # st.sidebar.write(
-    #     f"- ID cũ: `{last_files_id[:30]}...`" if last_files_id else "- ID cũ: Trống"
-    # )
-
-    if current_files_id != last_files_id:
-        if uploaded_files:
-            start_time = time.time()
-            with st.sidebar.status("🔄"):
-                st.session_state.vector_db = process_documents(uploaded_files, embedder)
-                st.session_state.last_files_id = current_files_id
-            procces_doc_time = time.time() - start_time
-            logger.info(f"DOC Proccessing time: {procces_doc_time}")
-        else:
-            st.session_state.vector_db = None
-            st.session_state.last_files_id = ""
 
     if st.sidebar.button(
         "Cuộc trò chuyện mới", use_container_width=True
@@ -105,7 +42,7 @@ def render_sidebar(embedder):
         st.session_state["delete_docs"] = None
         st.rerun()
 
-    history_files = get_chat_histories()
+    history_files = get_chat_history()
     with st.sidebar.expander("💬 Lịch sử trò chuyện", expanded=True):
         for f in history_files:
             display_name = f.get("title")
@@ -120,6 +57,91 @@ def render_sidebar(embedder):
                     st.session_state.messages = json.load(file)
                     st.session_state.current_session_file = f.get("filename")
                 st.rerun()
+
+    st.sidebar.divider()
+
+    if st.sidebar.button("Xóa tất cả tài liệu", use_container_width=True):
+        confirm_dialog("Bạn có chắc chắn muốn xóa tất cả tài liệu", "delete_docs")
+
+    if "uploader_key" not in st.session_state:
+        st.session_state.uploader_key = 0
+
+    uploaded_files = st.sidebar.file_uploader(
+        "Upload Files",
+        type=["pdf", "doc", "docx"],
+        accept_multiple_files=True,
+        key=f"uploader_{st.session_state.uploader_key}",
+    )
+
+    st.sidebar.divider()
+
+    with st.sidebar.expander("🛠️ Tùy chỉnh nâng cao", expanded=False):
+        st.slider(
+            "Chunk Size (Kích thước đoạn)",
+            min_value=100,
+            max_value=4000,
+            value=1000,
+            step=100,
+            key="chunk_size",
+        )
+
+        st.slider(
+            "Chunk Overlap (Độ gối đầu)",
+            min_value=0,
+            max_value=1000,
+            value=200,
+            step=100,
+            key="chunk_overlap",
+        )
+        apply_config = st.button("Áp dụng", use_container_width=True)
+
+    current_files_id = (
+        str([(f.name, f.size) for f in uploaded_files]) if uploaded_files else ""
+    )
+    last_files_id = st.session_state.get("last_files_id", "")
+
+    if current_files_id != last_files_id or apply_config:
+        if uploaded_files:
+            start_time = time.time()
+            with st.sidebar.status("🔄"):
+                st.session_state.vector_db = process_documents(uploaded_files, embedder)
+                st.session_state.last_files_id = current_files_id
+            procces_doc_time = time.time() - start_time
+            logger.info(f"DOC Proccessing time: {procces_doc_time}")
+            st.rerun()
+        else:
+            st.session_state.vector_db = None
+            st.session_state.last_files_id = ""
+
+    if st.session_state.get("delete_docs"):
+        st.session_state.vector_db = None
+        st.session_state.last_files_id = ""
+        if "uploader_key" not in st.session_state:
+            st.session_state.uploader_key = 0
+        st.session_state.uploader_key += 1
+        st.session_state["delete_docs"] = None
+        st.rerun()
+
+    if st.session_state.get("delete_chat_his"):
+        del st.session_state.messages
+        if "current_session_file" in st.session_state:
+            file_path = os.path.join(HISTORY_DIR, st.session_state.current_session_file)
+            if os.path.exists(file_path):
+                os.remove(file_path)
+            del st.session_state.current_session_file
+        st.session_state["delete_chat_his"] = None
+        st.rerun()
+
+    # st.sidebar.divider()
+    # st.sidebar.write("🔍 **Debug Info:**")
+    # st.sidebar.write(
+    #     f"- ID hiện tại: `{current_files_id[:100]}...`"
+    #     if current_files_id
+    #     else "- ID hiện tại: Trống"
+    # )
+    # st.sidebar.write(
+    #     f"- ID cũ: `{last_files_id[:30]}...`" if last_files_id else "- ID cũ: Trống"
+    # )
 
 
 @st.dialog("Cảnh báo")  ## Confirm delete dialog
@@ -139,7 +161,7 @@ def confirm_dialog(message, action_key):
             st.rerun()
 
 
-def get_chat_histories():
+def get_chat_history():
     if not os.path.exists(HISTORY_DIR):
         return []
 
