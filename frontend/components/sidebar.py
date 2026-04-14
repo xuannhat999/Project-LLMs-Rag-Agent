@@ -2,9 +2,11 @@ import streamlit as st
 import os
 import time
 import logging
+
+from sympy.geometry import line
 from data.chain_rag import process_documents
-import glob
 import json
+import streamlit.components.v1 as components
 
 HISTORY_DIR = os.path.expanduser("data/chat_history/")
 
@@ -25,11 +27,8 @@ def render_sidebar(embedder):
     # </style>""",
     #     unsafe_allow_html=True,
     # )
-    if st.sidebar.button("Xóa lịch sử chat", use_container_width=True):
-        confirm_dialog("Bạn có chắc chắn muốn xóa lịch sử chat", "delete_chat_his")
-
     if st.sidebar.button(
-        "Cuộc trò chuyện mới", use_container_width=True
+        "Cuộc trò chuyện mới", use_container_width=True, icon=":material/add:"
     ):  # Bỏ session hiện tại, tạo file chat json mới khi nhập prompt
         st.session_state.current_files_id = None
         del st.session_state.messages
@@ -43,11 +42,13 @@ def render_sidebar(embedder):
         st.rerun()
 
     history_files = get_chat_history()
-    with st.sidebar.expander("💬 Lịch sử trò chuyện", expanded=True):
+    with st.sidebar.expander(
+        "Lịch sử trò chuyện", expanded=True, icon=":material/chat:"
+    ):
         for f in history_files:
             display_name = f.get("title")
             if st.button(
-                f"📄 {display_name}",
+                f"{display_name}",
                 key=f"btn_{f.get('filename')}",
                 use_container_width=True,
             ):
@@ -58,10 +59,20 @@ def render_sidebar(embedder):
                     st.session_state.current_session_file = f.get("filename")
                 st.rerun()
 
+    if st.sidebar.button(
+        "Xóa lịch sử chat", use_container_width=True, icon=":material/delete:"
+    ):
+        confirm_dialog("Bạn có chắc chắn muốn xóa lịch sử chat", "delete_chat_his")
+    change_button_color("Xóa lịch sử chat", "white", "#af2828")
+
     st.sidebar.divider()
 
-    if st.sidebar.button("Xóa tất cả tài liệu", use_container_width=True):
+    if st.sidebar.button(
+        "Xóa tất cả tài liệu", use_container_width=True, icon=":material/delete:"
+    ):
         confirm_dialog("Bạn có chắc chắn muốn xóa tất cả tài liệu", "delete_docs")
+
+    change_button_color("Xóa tất cả tài liệu", "white", "#af2828")
 
     if "uploader_key" not in st.session_state:
         st.session_state.uploader_key = 0
@@ -75,7 +86,9 @@ def render_sidebar(embedder):
 
     st.sidebar.divider()
 
-    with st.sidebar.expander("🛠️ Tùy chỉnh nâng cao", expanded=False):
+    with st.sidebar.expander(
+        "Tùy chỉnh nâng cao", expanded=False, icon=":material/settings:"
+    ):
         st.slider(
             "Chunk Size (Kích thước đoạn)",
             min_value=100,
@@ -191,3 +204,23 @@ def get_chat_history():
         except Exception:
             continue
     return sessions
+
+
+def change_button_color(widget_label, font_color, background_color="transparent"):
+    htmlstr = f"""
+    <script>
+        var elements = window.parent.document.querySelectorAll('button');
+        for (var i = 0; i < elements.length; ++i) {{ 
+            if (elements[i].innerText.includes('{widget_label}')) {{ 
+                elements[i].style.color = '{font_color}';
+                elements[i].style.background = '{background_color}';
+
+                elements[i].onmouseout = function() {{ 
+                    this.style.color = '{font_color}';
+                    // Reset to a default border or keep current
+                }};
+            }}
+        }}
+    </script>
+    """
+    components.html(htmlstr, height=0, width=0)
