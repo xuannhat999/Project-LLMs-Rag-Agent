@@ -37,28 +37,35 @@ def process_documents(uploaded_files, embedder):  # TRÍCH VECTOR DATABASE
         return None
 
     all_splitted_docs = []
-
-    for uploaded_file in uploaded_files:
+    progress_text = "Đang khởi tạo..."
+    progress_bar = st.sidebar.progress(0, text=progress_text)
+    for i, file in enumerate(uploaded_files):
         # Lấy đuôi file thực tế ( .pdf hoặc .docx )
-        file_extension = os.path.splitext(uploaded_file.name)[1].lower()
+        file_extension = os.path.splitext(file.name)[1].lower()
 
         with tempfile.NamedTemporaryFile(delete=False, suffix=file_extension) as tmp:
-            tmp.write(uploaded_file.getbuffer())
+            tmp.write(file.getbuffer())
             tmp_path = tmp.name
 
         try:
             docs = load_document(tmp_path)
             for doc in docs:
-                doc.metadata["source"] = uploaded_file.name
+                doc.metadata["source"] = file.name
+            percent_complete = int((i / len(uploaded_files)) * 50)
+            progress_bar.progress(percent_complete, text=f"Splitting file: {file.name}")
             chunk = split_text(docs)
             all_splitted_docs.extend(chunk)
+            time.sleep(0.1)
         finally:
             if os.path.exists(tmp_path):
                 os.remove(tmp_path)
-
     if all_splitted_docs:
-        print(f" Đang tạo Vector DB cho {len(all_splitted_docs)} đoạn văn bản...")
-        return FAISS.from_documents(all_splitted_docs, embedder)
+        progress_bar.progress(50, text="Embeddings Vector...")
+        vector = FAISS.from_documents(all_splitted_docs, embedder)
+        progress_bar.progress(100, text="✅ Hoàn thành!")
+        time.sleep(1)
+        progress_bar.empty()
+        return vector
     if not uploaded_files:
         return None
 

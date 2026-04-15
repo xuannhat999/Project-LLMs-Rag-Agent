@@ -80,6 +80,7 @@ def split_text(doc):
     if not doc:
         print("Cảnh báo: Tài liệu rỗng, không có gì để split!")
         return []
+
     text_splitter = RecursiveCharacterTextSplitter(
         chunk_size=st.session_state.chunk_size,
         chunk_overlap=st.session_state.chunk_overlap,
@@ -105,10 +106,11 @@ def files_size_validation(files):
 
 
 def delete_all_files():
-    st.session_state.vector_db = None
+    del st.session_state.vector_db
+    del st.session_state.uploaded_files
     st.session_state.last_files_id = ""
     if "uploader_key" not in st.session_state:
         st.session_state.uploader_key = 0
-    st.session_state.uploader_key += 1
-    st.session_state["delete_docs"] = None
+    st.session_state.uploader_key += 1024
+    del st.session_state.delete_docs
     st.rerun()
