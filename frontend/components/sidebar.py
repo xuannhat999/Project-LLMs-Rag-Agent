@@ -76,11 +76,12 @@ def render_sidebar(embedder):
     st.sidebar.divider()
 
     config_data = load_config_file()
+
     with st.sidebar.expander(
         "Tùy chỉnh nâng cao", expanded=False, icon=":material/settings:"
     ):
         st.slider(
-            "Chunk Si/ze (Kích thước đoạn)",
+            "Chunk Size (Kích thước đoạn)",
             min_value=100,
             max_value=4000,
             step=100,
@@ -112,7 +113,9 @@ def render_sidebar(embedder):
                 or st.session_state.selected_model != selected_model
             ):
                 st.session_state.selected_model = selected_model
+
         apply_config = st.button("Áp dụng", use_container_width=True)
+    change_button_color("Áp dụng", "black", "#007BFF")
 
     current_files_id = (
         str([(f.name, f.size) for f in uploaded_files]) if uploaded_files else ""
