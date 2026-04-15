@@ -20,13 +20,12 @@ def evaluate(query, retrieved_docs):
     # Dự đoán điểm số cho tất cả các cặp cùng lúc (rất nhanh)
     scores = cross_encoder.predict(pairs)
     logger.info(f"Score (CoRAG): {scores}")
-    validated_context = []
+    validated_docs = [] # Thay đổi: Lưu cả object Document thay vì chỉ text
     success = False
 
     for i, score in enumerate(scores):
         if float(score) > 0.1:
             logger.info(f"Validated context with score: {score}")
-            validated_context.append(retrieved_docs[i].page_content)
+            validated_docs.append(retrieved_docs[i]) # Lưu nguyên object
             success = True
-
-    return ("success" if success else "fallback_required"), validated_context
+    return ("success" if success else "fallback_required"), validated_docs

@@ -34,7 +34,11 @@ def load_current_session(filename):
     except Exception:
         return None
 
-
+def display_sources(sources):
+    if sources:
+        with st.expander("📚 Nguồn trích dẫn", expanded=False):
+            for s in sources:
+                st.markdown(f"- {s}")
 # --- GIAO DIỆN CHATBOX ---
 @st.fragment
 def render_chatbox(model):
@@ -130,12 +134,16 @@ def render_chatbox(model):
                                 unsafe_allow_html=True,
                             )
                             st.markdown(msg["rag_content"])
+                            # HIỂN THỊ NGUỒN RAG
+                            display_sources(msg.get("rag_sources", []))
                         with c2:
                             st.markdown(
                                 "<div class='column-header'>🛡️ MÔ HÌNH CoRAG</div>",
                                 unsafe_allow_html=True,
                             )
                             st.markdown(msg["corag_content"])
+                             # HIỂN THỊ NGUỒN CORAG
+                            display_sources(msg.get("corag_sources", []))
                     else:
                         # Trường hợp tin nhắn cũ hoặc tin nhắn thông báo
                         col1, col2 = st.columns(2)
@@ -186,7 +194,12 @@ def render_chatbox(model):
                         if not corag_text:
                             corag_text = "Không đủ dữ liệu tin cậy để đánh giá."
                         corag_area.markdown(corag_text)
-
+                        # --- THÊM DÒNG NÀY ĐỂ HIỆN NGUỒN NGAY LẬP TỨC ---
+                        with col1:
+                            display_sources(results.get("rag_sources", []))
+                        with col2:
+                            display_sources(results.get("corag_sources", []))
+                        # -----------------------------------------------
                         # 4. LƯU VÀO LỊCH SỬ
                         st.session_state.messages.append(
                             {
@@ -194,6 +207,8 @@ def render_chatbox(model):
                                 "content": "So sánh RAG & CoRAG",  # Text ẩn cho logic
                                 "rag_content": results.get("rag"),
                                 "corag_content": corag_text,
+                                "rag_sources": results.get("rag_sources"),     # Lưu thêm
+                                "corag_sources": results.get("corag_sources")  # Lưu thêm
                             }
                         )
                         save_chat_history(st.session_state.messages)
