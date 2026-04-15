@@ -4,6 +4,7 @@ from langchain_community.document_loaders import Docx2txtLoader, PyMuPDFLoader
 from langchain_core.documents import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 import streamlit as st
+import time
 
 
 def load_document(file_path):
@@ -29,6 +30,8 @@ def load_document(file_path):
         loader = Docx2txtLoader(file_path)
         return loader.load()
     else:
+        st.toast("File sai định dạng\nVui lòng chỉ tải các file dạng '.pdf/.docx/.doc'")
+        time.sleep(3)
         raise ValueError(f"Định dạng file {ext} không được hỗ trợ.")
 
 
@@ -85,3 +88,27 @@ def split_text(doc):
         f"Splitted with Chunk size: {st.session_state.chunk_size} - Chunk overlap: {st.session_state.chunk_overlap}"
     )
     return text_splitter.split_documents(doc)
+
+
+def get_file_size(file):
+    total_bytes = file.size
+    total_mb = total_bytes / (1024 * 1024)
+    return total_mb
+
+
+def files_size_validation(files):
+    validated_files = []
+    for f in files:
+        if get_file_size(f) < 1:
+            validated_files.append(f)
+    return validated_files
+
+
+def delete_all_files():
+    st.session_state.vector_db = None
+    st.session_state.last_files_id = ""
+    if "uploader_key" not in st.session_state:
+        st.session_state.uploader_key = 0
+    st.session_state.uploader_key += 1
+    st.session_state["delete_docs"] = None
+    st.rerun()

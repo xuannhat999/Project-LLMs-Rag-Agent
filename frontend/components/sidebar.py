@@ -8,6 +8,7 @@ import json
 import streamlit.components.v1 as components
 from backend.model import load_config_file, save_config
 from backend.chat import HISTORY_DIR, get_chat_history
+from backend.file_loader import get_file_size, delete_all_files, files_size_validation
 
 
 def render_sidebar(embedder):
@@ -28,6 +29,7 @@ def render_sidebar(embedder):
         st.session_state.uploader_key += 1
         st.session_state["delete_docs"] = None
         st.rerun()
+
     change_button_color("Cuộc trò chuyện mới", "black", "#007BFF")
 
     history_files = get_chat_history()
@@ -68,7 +70,7 @@ def render_sidebar(embedder):
 
     uploaded_files = st.sidebar.file_uploader(
         "Upload Files",
-        type=["pdf", "doc", "docx"],
+        type=["pdf", "doc", "docx", "odt"],
         accept_multiple_files=True,
         key=f"uploader_{st.session_state.uploader_key}",
     )
@@ -121,7 +123,7 @@ def render_sidebar(embedder):
         str([(f.name, f.size) for f in uploaded_files]) if uploaded_files else ""
     )
     last_files_id = st.session_state.get("last_files_id", "")
-
+    error_place_holder = st.empty()
     if current_files_id != last_files_id or apply_config:
         if apply_config:
             if st.session_state.selected_model != config_data.get("model"):
@@ -133,27 +135,43 @@ def render_sidebar(embedder):
             )
             st.sidebar.success("Cấu hình đã được lưu thành công!", icon="✅")
             time.sleep(0.5)
+            st.session_state.uploader_key += 1
         if uploaded_files:
-            start_time = time.time()
-            with st.sidebar.status("🔄"):
-                st.session_state.vector_db = process_documents(uploaded_files, embedder)
-                st.session_state.last_files_id = current_files_id
-            procces_doc_time = time.time() - start_time
-            logger.info(f"DOC Proccessing time: {procces_doc_time}")
+            oversized_files = []
+            for f in uploaded_files:
+                if f not in files_size_validation(uploaded_files):
+                    oversized_files.append(f)
+            if len(oversized_files) > 0:
+                logger.info("Failed file size validation")
+                st.session_state.uploader_key += 1
+                filenames = [f.name for f in oversized_files]
+                error_place_holder.error(f"""
+                **Các tài liệu vượt quá dung lượng (200MB/file):**  
+                - {
+                    '''
+                - '''.join(filenames)
+                }  
+                **Vui lòng tải tài liệu lên lại**
+                """)
+                time.sleep(4)
+                error_place_holder.empty()
+                st.rerun()
+            else:
+                start_time = time.time()
+                with st.sidebar.status("🔄"):
+                    st.session_state.vector_db = process_documents(
+                        uploaded_files, embedder
+                    )
+                    st.session_state.last_files_id = current_files_id
+                    procces_doc_time = time.time() - start_time
+                logger.info(f"DOC Proccessed time: {procces_doc_time}")
+                logger.info(f"Proccess {len(uploaded_files)} files")
         else:
             st.session_state.vector_db = None
             st.session_state.last_files_id = ""
-        st.rerun()
 
     if st.session_state.get("delete_docs"):
-        st.session_state.vector_db = None
-        st.session_state.last_files_id = ""
-        if "uploader_key" not in st.session_state:
-            st.session_state.uploader_key = 0
-        st.session_state.uploader_key += 1
-        st.session_state["delete_docs"] = None
-        st.rerun()
-
+        delete_all_files()
     if st.session_state.get("delete_chat_his"):
         del st.session_state.messages
         if "current_session_file" in st.session_state:

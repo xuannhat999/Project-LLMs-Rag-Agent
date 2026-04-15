@@ -104,12 +104,16 @@ def process_query(vector_db, model, user_input):
     # return {
     #   "rag": Response của RAG,
     #   "corag": Response của CoRAG
+    #   "rag_sources": document nguồn liên quan từ rag
+    #   "corag_sources": document nguồn liên quan từ corag
     # }
     #
     # Nếu chỉ có query của user:
     # return {
     #   "rag": Response của RAG,
-    #   "corag": None
+    #   "corag": None,
+    #   "rag_sources": document nguồn liên quan từ rag
+    #   "corag_sources": []
     # }
     #
     start_time = time.time()
@@ -184,4 +188,3 @@ def process_query(vector_db, model, user_input):
 #     vector = process_documents_pdf(file, embedder)
 #     final_anser = process_query(vector, model, query)
 #     print(final_anser)
-

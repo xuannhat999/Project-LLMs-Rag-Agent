@@ -24,9 +24,8 @@ def evaluate(query, retrieved_docs):
     success = False
 
     for i, score in enumerate(scores):
-        if float(score) > 0.1:
+        if float(score) > 0.3:
             #     logger.info(f"Validated context with score: {score}")
             validated_docs.append(retrieved_docs[i])
             success = True
     return ("success" if success else "fallback_required"), validated_docs
-
