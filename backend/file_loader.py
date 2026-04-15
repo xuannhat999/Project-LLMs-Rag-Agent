@@ -85,4 +85,3 @@ def split_text(doc):
         f"Splitted with Chunk size: {st.session_state.chunk_size} - Chunk overlap: {st.session_state.chunk_overlap}"
     )
     return text_splitter.split_documents(doc)
-

@@ -3,33 +3,21 @@ import os
 import time
 import logging
 
-from sympy.geometry import line
-from data.chain_rag import process_documents
+from backend.chain_rag import process_documents
 import json
 import streamlit.components.v1 as components
-
-HISTORY_DIR = os.path.expanduser("data/chat_history/")
+from backend.model import load_config_file, save_config
+from backend.chat import HISTORY_DIR, get_chat_history
 
 
 def render_sidebar(embedder):
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)
-    #     st.markdown(
-    #         """
-    # <style>
-    # div.stButton > button {
-    #     background-color: #af2828;
-    #     color:#ffffff;
-    # }
-    # div.stButton > button:hover {
-    #     background-color: #e74444;
-    # }
-    # </style>""",
-    #     unsafe_allow_html=True,
-    # )
-    if st.sidebar.button(
+
+    btn_new_chat = st.sidebar.button(
         "Cuộc trò chuyện mới", use_container_width=True, icon=":material/add:"
-    ):  # Bỏ session hiện tại, tạo file chat json mới khi nhập prompt
+    )
+    if btn_new_chat:  # Bỏ session hiện tại, tạo file chat json mới khi nhập prompt
         st.session_state.current_files_id = None
         del st.session_state.messages
         st.session_state.vector_db = None
@@ -40,6 +28,7 @@ def render_sidebar(embedder):
         st.session_state.uploader_key += 1
         st.session_state["delete_docs"] = None
         st.rerun()
+    change_button_color("Cuộc trò chuyện mới", "black", "#007BFF")
 
     history_files = get_chat_history()
     with st.sidebar.expander(
@@ -86,14 +75,14 @@ def render_sidebar(embedder):
 
     st.sidebar.divider()
 
+    config_data = load_config_file()
     with st.sidebar.expander(
         "Tùy chỉnh nâng cao", expanded=False, icon=":material/settings:"
     ):
         st.slider(
-            "Chunk Size (Kích thước đoạn)",
+            "Chunk Si/ze (Kích thước đoạn)",
             min_value=100,
             max_value=4000,
-            value=1000,
             step=100,
             key="chunk_size",
         )
@@ -102,10 +91,27 @@ def render_sidebar(embedder):
             "Chunk Overlap (Độ gối đầu)",
             min_value=0,
             max_value=1000,
-            value=200,
             step=100,
             key="chunk_overlap",
         )
+        if "models" in st.session_state:
+            models = st.session_state.models
+            index = 0
+            for i, model in enumerate(models):
+                if model == st.session_state.selected_model:
+                    index = i
+            selected_model = st.selectbox(
+                "Model đang sử dụng:",
+                options=models,
+                key="model_selector_box",  # Key để tránh trùng lặp component
+                help="Chọn model LLM bạn muốn sử dụng cho hệ thống RAG",
+                index=index,
+            )
+            if (
+                "selected_model" not in st.session_state
+                or st.session_state.selected_model != selected_model
+            ):
+                st.session_state.selected_model = selected_model
         apply_config = st.button("Áp dụng", use_container_width=True)
 
     current_files_id = (
@@ -114,6 +120,16 @@ def render_sidebar(embedder):
     last_files_id = st.session_state.get("last_files_id", "")
 
     if current_files_id != last_files_id or apply_config:
+        if apply_config:
+            if st.session_state.selected_model != config_data.get("model"):
+                st.cache_resource.clear()
+            save_config(
+                model_name=st.session_state.get("selected_model"),
+                chunk_size=st.session_state.get("chunk_size"),
+                chunk_overlap=st.session_state.get("chunk_overlap"),
+            )
+            st.sidebar.success("Cấu hình đã được lưu thành công!", icon="✅")
+            time.sleep(0.5)
         if uploaded_files:
             start_time = time.time()
             with st.sidebar.status("🔄"):
@@ -121,10 +137,10 @@ def render_sidebar(embedder):
                 st.session_state.last_files_id = current_files_id
             procces_doc_time = time.time() - start_time
             logger.info(f"DOC Proccessing time: {procces_doc_time}")
-            st.rerun()
         else:
             st.session_state.vector_db = None
             st.session_state.last_files_id = ""
+        st.rerun()
 
     if st.session_state.get("delete_docs"):
         st.session_state.vector_db = None
@@ -172,38 +188,6 @@ def confirm_dialog(message, action_key):
         if st.button("Hủy", key="btn_cancel", use_container_width=True):
             st.session_state[action_key] = False
             st.rerun()
-
-
-def get_chat_history():
-    if not os.path.exists(HISTORY_DIR):
-        return []
-
-    sessions = []
-    files = [f for f in os.listdir(HISTORY_DIR) if f.endswith(".json")]
-    # Sắp xếp file mới nhất lên đầu
-    files.sort(
-        key=lambda x: os.path.getctime(os.path.join(HISTORY_DIR, x)), reverse=True
-    )
-    for f in files:
-        filepath = os.path.join(HISTORY_DIR, f)
-        try:
-            with open(filepath, "r", encoding="utf-8") as file:
-                data = json.load(file)
-                # Tìm tin nhắn đầu tiên của user để làm tiêu đề
-                first_question = "Phiên thảo luận trống"
-                for msg in data:
-                    if msg.get("role") == "user":
-                        content = msg.get("content", "")
-                        # Cắt ngắn nếu câu hỏi quá dài
-                        first_question = (
-                            (content[:35] + "...") if len(content) > 35 else content
-                        )
-                        break
-
-                sessions.append({"filename": f, "title": first_question})
-        except Exception:
-            continue
-    return sessions
 
 
 def change_button_color(widget_label, font_color, background_color="transparent"):

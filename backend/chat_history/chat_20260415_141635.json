@@ -1,0 +1,23 @@
+[
+    {
+        "role": "user",
+        "content": "trong osassignment, color palette của giao diện người dùng là gồm những màu nào"
+    },
+    {
+        "role": "assistant",
+        "content": "So sánh RAG & CoRAG",
+        "rag_content": "Trong ngữ cảnh bài tập lớn OSSD 2026 và hệ thống RAG System với LLMs, màu sắc giao diện người dùng bao gồm:\n\n- Primary Color: #007BFF (Blue) - Sử dụng cho nút và highlight.\n- Secondary Color: #FFC107 (Amber) - Sử dụng cho nút tải lên file.\n- Background: #F8F9FA (Light gray) - Sử dụng làm nền chính.\n- Sidebar: #2C2F33 (Dark gray) - Sử dụng làm nền sidebar.\n- Text: #212529 (Dark gray) - Sử dụng cho văn bản chính.\n- Sidebar Text: #FFFFFF (White) - Sử dụng làm văn bản trong sidebar.",
+        "corag_content": "Color Palette của giao diện người dùng bao gồm:\n- Primary Color: #007BFF (Blue) - Sử dụng cho nút và highlight.\n- Secondary Color: #FFC107 (Amber) - Sử dụng cho nút tải lên.\n- Background: #F8F9FA (Light gray) - Sử dụng làm nền chính.\n- Sidebar: #2C2F33 (Dark gray) - Sử dụng làm nền sidebar.\n- Text: #212529 (Dark gray) - Sử dụng làm văn bản chính.\n- Sidebar Text: #FFFFFF (White) - Sử dụng làm văn bản trong sidebar.",
+        "rag_sources": [
+            "OSAssignment.pdf (Trang 15)",
+            "OSAssignment.pdf (Trang 2)",
+            "OSAssignment.pdf (Trang 12)",
+            "OSAssignment.pdf (Trang 11)",
+            "OSAssignment.pdf (Trang 8)"
+        ],
+        "corag_sources": [
+            "OSAssignment.pdf (Trang 15)",
+            "OSAssignment.pdf (Trang 2)"
+        ]
+    }
+]

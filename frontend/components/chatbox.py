@@ -1,10 +1,9 @@
 import streamlit as st
 from streamlit.runtime.state import session_state
-from data.chain_rag import process_query  # Giữ nguyên hàm gốc của bạn
+from backend.chain_rag import process_query  # Giữ nguyên hàm gốc của bạn
 import os, json
 from datetime import datetime
-
-HISTORY_DIR = os.path.expanduser("data/chat_history/")
+from backend.chat import HISTORY_DIR, get_chat_history
 
 
 def save_chat_history(messages):
@@ -34,11 +33,14 @@ def load_current_session(filename):
     except Exception:
         return None
 
+
 def display_sources(sources):
     if sources:
         with st.expander("📚 Nguồn trích dẫn", expanded=False):
             for s in sources:
                 st.markdown(f"- {s}")
+
+
 # --- GIAO DIỆN CHATBOX ---
 @st.fragment
 def render_chatbox(model):
@@ -54,17 +56,18 @@ def render_chatbox(model):
     /* Định dạng chung cho tin nhắn */
     [data-testid="stChatMessage"] {
         padding: 10px 0px !important;
-        background-color: transparent !important;
+        # background-color: transparent !important;
     }
 
     /* STYLE CHO USER*/
     [data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarUser"]) div[data-testid="stMarkdownContainer"] {
-        background-color: #333333 !important;
+        # background-color: #333333 !important;
         border-radius: 15px !important;
         padding: 10px 20px !important;
         margin-left: auto !important;
         width: fit-content !important;
         max-width: 80% !important;
+        border: 1px solid #CCCCCC !important
     }
     
     [data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarUser"]) p {
@@ -142,7 +145,7 @@ def render_chatbox(model):
                                 unsafe_allow_html=True,
                             )
                             st.markdown(msg["corag_content"])
-                             # HIỂN THỊ NGUỒN CORAG
+                            # HIỂN THỊ NGUỒN CORAG
                             display_sources(msg.get("corag_sources", []))
                     else:
                         # Trường hợp tin nhắn cũ hoặc tin nhắn thông báo
@@ -207,8 +210,10 @@ def render_chatbox(model):
                                 "content": "So sánh RAG & CoRAG",  # Text ẩn cho logic
                                 "rag_content": results.get("rag"),
                                 "corag_content": corag_text,
-                                "rag_sources": results.get("rag_sources"),     # Lưu thêm
-                                "corag_sources": results.get("corag_sources")  # Lưu thêm
+                                "rag_sources": results.get("rag_sources"),  # Lưu thêm
+                                "corag_sources": results.get(
+                                    "corag_sources"
+                                ),  # Lưu thêm
                             }
                         )
                         save_chat_history(st.session_state.messages)

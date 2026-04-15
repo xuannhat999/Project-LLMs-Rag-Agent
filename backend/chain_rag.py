@@ -8,9 +8,9 @@ import streamlit as st
 from langchain_community.vectorstores import FAISS
 from langchain_huggingface import HuggingFaceEmbeddings
 
-from data.file_loader import load_document, split_text
-from data.model import get_prompt_template
-from data.chain_corag import evaluate
+from backend.file_loader import load_document, split_text
+from backend.model import get_prompt_template
+from backend.chain_corag import evaluate
 
 
 def get_retriever(vector):
@@ -86,6 +86,7 @@ def process_documents(uploaded_files, embedder):
         return FAISS.from_documents(all_splitted_docs, embedder)
     return None
 
+
 def extract_sources(docs):
     sources = []
     for doc in docs:
@@ -96,6 +97,8 @@ def extract_sources(docs):
         if source_str not in sources:
             sources.append(source_str)
     return sources
+
+
 def process_query(vector_db, model, user_input):
     # Nếu có context từ doc:
     # return {
@@ -115,12 +118,7 @@ def process_query(vector_db, model, user_input):
     logger = logging.getLogger(__name__)
     logger.info(f"Proccessing query: {user_input}")
 
-    results = {
-        "rag": None, 
-        "corag": None, 
-        "rag_sources": [], 
-        "corag_sources": []
-    }
+    results = {"rag": None, "corag": None, "rag_sources": [], "corag_sources": []}
     if vector_db is not None:
         retriever = get_retriever(vector_db)
         related_docs = retriever.invoke(user_input)
@@ -128,7 +126,7 @@ def process_query(vector_db, model, user_input):
         logger.info(f"Retrieved time: {retrieved_time}")
 
         # Lấy nguồn cho RAG
-        results["rag_sources"] = extract_sources(related_docs)  
+        results["rag_sources"] = extract_sources(related_docs)
 
         def process_rag():
             logger.info("Started procces RAG !")
@@ -149,7 +147,9 @@ def process_query(vector_db, model, user_input):
             logger.info(f"Evaluate time (CoRAG): {evaluate_time}")
             if score == "success":
                 results["corag_sources"] = extract_sources(validated_docs)
-                context = "\n\n".join([d.page_content for d in validated_docs]) # .page_content vì giờ là object
+                context = "\n\n".join(
+                    [d.page_content for d in validated_docs]
+                )  # .page_content vì giờ là object
                 prompt = get_prompt_template(user_input).format(
                     context=context, user_input=user_input
                 )
@@ -184,3 +184,4 @@ def process_query(vector_db, model, user_input):
 #     vector = process_documents_pdf(file, embedder)
 #     final_anser = process_query(vector, model, query)
 #     print(final_anser)
+
