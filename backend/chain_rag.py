@@ -32,7 +32,7 @@ def get_embedder():
     )
 
 
-def process_documents(uploaded_files, embedder):
+def process_documents(uploaded_files, embedder):  # TRÍCH VECTOR DATABASE
     if not uploaded_files:
         return None
 
@@ -57,37 +57,13 @@ def process_documents(uploaded_files, embedder):
                 os.remove(tmp_path)
 
     if all_splitted_docs:
-        print(f"🚀 Đang tạo Vector DB cho {len(all_splitted_docs)} đoạn văn bản...")
+        print(f" Đang tạo Vector DB cho {len(all_splitted_docs)} đoạn văn bản...")
         return FAISS.from_documents(all_splitted_docs, embedder)
     if not uploaded_files:
         return None
 
-    all_splitted_docs = []
 
-    for uploaded_file in uploaded_files:
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
-            tmp.write(uploaded_file.getbuffer())
-            tmp_path = tmp.name
-
-        try:
-            docs = load_document(tmp_path)
-            for doc in docs:
-                doc.metadata["source"] = uploaded_file.name
-            chunk = split_text(docs)
-            all_splitted_docs.extend(chunk)
-        finally:
-            if os.path.exists(tmp_path):
-                os.remove(tmp_path)
-
-    if all_splitted_docs:
-        print(
-            f"🚀 Đang tạo Vector DB cho tổng cộng {len(all_splitted_docs)} đoạn văn bản..."
-        )
-        return FAISS.from_documents(all_splitted_docs, embedder)
-    return None
-
-
-def extract_sources(docs):
+def extract_sources(docs):  # TRÍCH NGUỒN TỪ DOC
     sources = []
     for doc in docs:
         source_name = doc.metadata.get("source", "Unknown")
@@ -177,14 +153,3 @@ def process_query(vector_db, model, user_input):
         logger.info(f"Respront time with no doc: {res_time}")
         logger.info(f"Response with no doc: {results['rag']}")
     return results
-
-
-#
-# if __name__ == "__main__":
-#     file = ["~/Project-LLMs-Rag-Agent/documentation/OSAssignment.pdf"]
-#     model = get_model()
-#     query = "Đồ án này yêu cầu làm gì ?"
-#     embedder = get_embedder()
-#     vector = process_documents_pdf(file, embedder)
-#     final_anser = process_query(vector, model, query)
-#     print(final_anser)

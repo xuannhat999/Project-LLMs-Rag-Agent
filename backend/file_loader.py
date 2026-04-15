@@ -99,7 +99,7 @@ def get_file_size(file):
 def files_size_validation(files):
     validated_files = []
     for f in files:
-        if get_file_size(f) < 1:
+        if get_file_size(f) < 200:
             validated_files.append(f)
     return validated_files
 

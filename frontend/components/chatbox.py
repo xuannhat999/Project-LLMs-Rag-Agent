@@ -56,18 +56,19 @@ def render_chatbox(model):
     /* Định dạng chung cho tin nhắn */
     [data-testid="stChatMessage"] {
         padding: 10px 0px !important;
-        # background-color: transparent !important;
+        background-color: transparent !important;
     }
 
     /* STYLE CHO USER*/
     [data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarUser"]) div[data-testid="stMarkdownContainer"] {
-        # background-color: #333333 !important;
+        background-color: #007BFF !important;
         border-radius: 15px !important;
         padding: 10px 20px !important;
         margin-left: auto !important;
         width: fit-content !important;
         max-width: 80% !important;
-        border: 1px solid #CCCCCC !important
+        color: #000000 !important; 
+        # border: 1px solid #CCCCCC !important
     }
     
     [data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarUser"]) p {
@@ -76,7 +77,7 @@ def render_chatbox(model):
 
     /* STYLE CHO ASSISTANT*/
     [data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarAssistant"]) {
-        # background-color: #F5F5F5 !important;
+        background-color: #1c2c3e !important;
         border: 1px solid #CCCCCC !important;
         border-radius: 10px !important;
         padding: 15px !important;
@@ -91,7 +92,7 @@ def render_chatbox(model):
     .column-header {
         font-weight: bold;
         text-transform: uppercase;
-        border-bottom: 2px solid #333;
+        border-bottom: 2px solid #CCCCCC;
         margin-bottom: 15px;
         padding-bottom: 5px;
         # color: #333 !important;
