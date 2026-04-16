@@ -122,7 +122,14 @@ def process_query(vector_db, model, user_input):
     logger = logging.getLogger(__name__)
     logger.info(f"Proccessing query: {user_input}")
 
-    results = {"rag": None, "corag": None, "rag_sources": [], "corag_sources": []}
+    results = {
+        "rag": None, 
+        "corag": None, 
+        "rag_sources": [], 
+        "corag_sources": [],
+        "rag_details": [],   
+        "corag_details": []  
+    }
     if vector_db is not None:
         retriever = get_retriever(vector_db)
         related_docs = retriever.invoke(user_input)
@@ -131,6 +138,15 @@ def process_query(vector_db, model, user_input):
 
         # Lấy nguồn cho RAG
         results["rag_sources"] = extract_sources(related_docs)
+
+        # Lưu chi tiết cho RAG
+        results["rag_details"] = [
+            {
+                "content": doc.page_content, 
+                "source": doc.metadata.get("source", "Unknown"),
+                "page": doc.metadata.get("page", "?")
+            } for doc in related_docs
+        ]
 
         def process_rag():
             logger.info("Started procces RAG !")
@@ -151,6 +167,14 @@ def process_query(vector_db, model, user_input):
             logger.info(f"Evaluate time (CoRAG): {evaluate_time}")
             if score == "success":
                 results["corag_sources"] = extract_sources(validated_docs)
+                # Lưu chi tiết cho CoRAG
+                results["corag_details"] = [
+                    {
+                        "content": d.page_content, 
+                        "source": d.metadata.get("source", "Unknown"),
+                        "page": d.metadata.get("page", "?")
+                    } for d in validated_docs
+                ]
                 context = "\n\n".join(
                     [d.page_content for d in validated_docs]
                 )  # .page_content vì giờ là object

@@ -4,8 +4,21 @@ from backend.chain_rag import process_query  # Giữ nguyên hàm gốc của b�
 import os, json
 from datetime import datetime
 from backend.chat import HISTORY_DIR, get_chat_history
+import re
 
 
+
+def highlight_text(text, query):
+    # Lấy các từ quan trọng từ query (bỏ qua các từ quá ngắn)
+    keywords = [w for w in query.split() if len(w) > 3]
+    for word in keywords:
+        # Sử dụng Regex để thay thế không phân biệt hoa thường
+        try:
+            pattern = re.compile(re.escape(word), re.IGNORECASE)
+            text = pattern.sub(f"**{word}**", text) 
+        except:
+            continue
+    return text
 def save_chat_history(messages):
     if not os.path.exists(HISTORY_DIR):
         os.makedirs(HISTORY_DIR)
@@ -34,11 +47,23 @@ def load_current_session(filename):
         return None
 
 
-def display_sources(sources):
-    if sources:
-        with st.expander("📚 Nguồn trích dẫn", expanded=False):
-            for s in sources:
-                st.markdown(f"- {s}")
+def display_sources(details, user_query=""):
+    if details:
+        st.markdown("---")
+        st.caption("📚 Nguồn trích dẫn (Click để xem chi tiết):")
+        
+        # Hiển thị các nguồn dưới dạng các nút nhỏ (popover)
+        cols = st.columns(len(details) if len(details) < 3 else 3)
+        for idx, item in enumerate(details):
+            with cols[idx % 3]:
+                # Đây là phần "Cho phép người dùng click để xem context gốc"
+                with st.popover(f"📄 Trang {item['page']}"):
+                    st.markdown(f"**Tài liệu:** {item['source']}")
+                    st.markdown("**Nội dung gốc:**")
+                    
+                    # Thực hiện highlight các đoạn liên quan đến câu hỏi
+                    highlighted_content = highlight_text(item['content'], user_query)
+                    st.info(highlighted_content)
 
 
 # --- GIAO DIỆN CHATBOX ---
@@ -137,8 +162,8 @@ def render_chatbox(model):
                                 unsafe_allow_html=True,
                             )
                             st.markdown(msg["rag_content"])
-                            # HIỂN THỊ NGUỒN RAG
-                            display_sources(msg.get("rag_sources", []))
+                             # Hiển thị nguồn có kèm nội dung để click
+                            display_sources(msg.get("rag_details", []), msg.get("user_query", ""))
                         with c2:
                             st.markdown(
                                 "<div class='column-header'>🛡️ MÔ HÌNH CoRAG</div>",
@@ -146,7 +171,7 @@ def render_chatbox(model):
                             )
                             st.markdown(msg["corag_content"])
                             # HIỂN THỊ NGUỒN CORAG
-                            display_sources(msg.get("corag_sources", []))
+                            display_sources(msg.get("corag_details", []), msg.get("user_query", ""))
                     else:
                         # Trường hợp tin nhắn cũ hoặc tin nhắn thông báo
                         col1, col2 = st.columns(2)
@@ -197,23 +222,24 @@ def render_chatbox(model):
                         if not corag_text:
                             corag_text = "Không đủ dữ liệu tin cậy để đánh giá."
                         corag_area.markdown(corag_text)
-                        # --- THÊM DÒNG NÀY ĐỂ HIỆN NGUỒN NGAY LẬP TỨC ---
+                        # --- SỬA ĐOẠN NÀY ĐỂ HIỆN NGUỒN CHI TIẾT NGAY LẬP TỨC ---
                         with col1:
-                            display_sources(results.get("rag_sources", []))
+                            display_sources(results.get("rag_details", []), user_input)
                         with col2:
-                            display_sources(results.get("corag_sources", []))
-                        # -----------------------------------------------
+                            display_sources(results.get("corag_details", []), user_input)
+                        # -----------------------------------------------------
                         # 4. LƯU VÀO LỊCH SỬ
                         st.session_state.messages.append(
                             {
                                 "role": "assistant",
                                 "content": "So sánh RAG & CoRAG",  # Text ẩn cho logic
+                                "user_query": user_input,        # QUAN TRỌNG: Lưu lại câu hỏi để highlight từ khóa
                                 "rag_content": results.get("rag"),
                                 "corag_content": corag_text,
-                                "rag_sources": results.get("rag_sources"),  # Lưu thêm
-                                "corag_sources": results.get(
-                                    "corag_sources"
-                                ),  # Lưu thêm
+                                "rag_sources": results.get("rag_sources"),
+                                "corag_sources": results.get("corag_sources"),
+                                "rag_details": results.get("rag_details"),     # Danh sách object chứa content, page...
+                                "corag_details": results.get("corag_details")   # Danh sách object chứa content, page...
                             }
                         )
                         save_chat_history(st.session_state.messages)
