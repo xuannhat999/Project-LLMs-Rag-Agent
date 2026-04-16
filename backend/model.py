@@ -8,25 +8,30 @@ import json
 CONFIG_FILE = "config.json"
 
 
-def get_prompt_template(user_input):
+def get_prompt_template(user_input, chat_history=""):
     vn_chars = "àáảãạăâèéêìíòóôơùúưỳýđịĩủũụừứặắằếềốồớờộỗỡ"
-    # Kiểm tra nếu có bất kỳ ký tự tiếng Việt đặc trưng nào
     is_vn = any(c in user_input.lower() for c in vn_chars)
 
     if is_vn:
-        return """Sử dụng ngữ cảnh sau đây để trả lời câu hỏi.
-Nếu bạn không biết, chỉ cần nói là bạn không biết.
-Trả lời ngắn gọn (3-4 câu) BẮT BUỘC bằng tiếng Việt.
-Ngữ cảnh: {context}
-Câu hỏi: {user_input}
-Trả lời: """
+        return f"""Bạn là một trợ lý ảo thông minh. Dưới đây là lịch sử cuộc trò chuyện và ngữ cảnh tài liệu.
+Lịch sử trò chuyện:
+{chat_history}
 
-    return """Use the following context to answer the question.
-If you don't know the answer, just say you don't know.
-Keep answer concise (3-4 sentences).
-Context: {context}
-Question: {user_input}
-Answer: """
+Ngữ cảnh tài liệu:
+{{context}}
+
+Câu hỏi mới nhất: {{user_input}}
+Trả lời (ngắn gọn 3-4 câu, bằng tiếng Việt): """
+
+    return f"""You are a helpful assistant. Below is the chat history and document context.
+Chat History:
+{chat_history}
+
+Document Context:
+{{context}}
+
+New Question: {{user_input}}
+Answer (concise 3-4 sentences): """
 
 
 @st.cache_resource

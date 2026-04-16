@@ -82,7 +82,7 @@ def extract_sources(docs):  # TRÍCH NGUỒN TỪ DOC
     return sources
 
 
-def process_query(vector_db, model, user_input):
+def process_query(vector_db, model, user_input,chat_history_list=[]):
     # Nếu có context từ doc:
     # return {
     #   "rag": Response của RAG,
@@ -99,6 +99,15 @@ def process_query(vector_db, model, user_input):
     #   "corag_sources": []
     # }
     #
+    # Chuyển đổi danh sách tin nhắn từ session_state thành chuỗi văn bản
+    formatted_history = ""
+    # Lấy tối đa 5 cặp hội thoại gần nhất để tránh quá tải bộ nhớ (Context Window)
+    recent_messages = chat_history_list[-6:] 
+    for msg in recent_messages:
+        role = "Người dùng" if msg["role"] == "user" else "Trợ lý"
+        # Lấy nội dung câu trả lời (ưu tiên lấy từ corag nếu có, không thì lấy content)
+        content = msg.get("corag_content") or msg.get("rag_content") or msg.get("content", "")
+        formatted_history += f"{role}: {content}\n"
     start_time = time.time()
 
     logging.basicConfig(level=logging.INFO)
@@ -134,7 +143,7 @@ def process_query(vector_db, model, user_input):
         def process_rag():
             logger.info("Started procces RAG !")
             context = "\n\n".join([doc.page_content for doc in related_docs])
-            prompt_text = get_prompt_template(user_input).format(
+            prompt_text = get_prompt_template(user_input, formatted_history).format(
                 context=context, user_input=user_input
             )
             results["rag"] = model.invoke(prompt_text)
@@ -161,7 +170,7 @@ def process_query(vector_db, model, user_input):
                 context = "\n\n".join(
                     [d.page_content for d in validated_docs]
                 )  # .page_content vì giờ là object
-                prompt = get_prompt_template(user_input).format(
+                prompt = get_prompt_template(user_input, formatted_history).format(
                     context=context, user_input=user_input
                 )
                 logger.info(f"CoRAG Prompt: \n{prompt}")

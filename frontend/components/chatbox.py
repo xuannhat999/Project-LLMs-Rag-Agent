@@ -212,7 +212,8 @@ def render_chatbox(model):
                     try:
                         # GỌI HÀM LOGIC CỦA FILE 1 (Workflow gốc)
                         # Đảm bảo hàm process_query trả về dict có key 'rag' và 'corag'
-                        results = process_query(vector_db, model, user_input)
+                        # Chỉ gửi các tin nhắn trước đó, không gửi câu vừa append
+                        results = process_query(vector_db, model, user_input, st.session_state.messages[:-1])
 
                         # Hiển thị kết quả vào đúng cột
                         rag_area.markdown(
