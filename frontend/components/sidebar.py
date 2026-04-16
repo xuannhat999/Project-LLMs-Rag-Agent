@@ -8,12 +8,14 @@ import json
 import streamlit.components.v1 as components
 from backend.model import load_config_file, save_config
 from backend.chat import HISTORY_DIR, get_chat_history
-from backend.file_loader import get_file_size, delete_all_files, files_size_validation
+from backend.file_loader import delete_all_files, files_size_validation
 
 
 def render_sidebar(embedder):
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)
+
+    noti_place_holder = st.empty()  # NOTIFICATION WIDGET
 
     btn_new_chat = st.sidebar.button(
         "Cuộc trò chuyện mới", use_container_width=True, icon=":material/add:"
@@ -21,20 +23,13 @@ def render_sidebar(embedder):
     if btn_new_chat:  # Bỏ session hiện tại, tạo file chat json mới khi nhập prompt
         st.session_state.current_files_id = None
         del st.session_state.messages
-        st.session_state.vector_db = None
-        st.session_state.last_files_id = ""
         del st.session_state.current_session_file
-        if "uploader_key" not in st.session_state:
-            st.session_state.uploader_key = 0
-        st.session_state.uploader_key += 1
-        st.session_state["delete_docs"] = None
-        st.rerun()
-
+        delete_all_files()
     change_button_color("Cuộc trò chuyện mới", "black", "#007BFF")
 
     history_files = get_chat_history()
     with st.sidebar.expander(
-        "Lịch sử trò chuyện", expanded=True, icon=":material/chat:"
+        "Lịch sử trò chuyện", expanded=False, icon=":material/chat:"
     ):
         for f in history_files:
             display_name = f.get("title")
@@ -61,21 +56,24 @@ def render_sidebar(embedder):
     if st.sidebar.button(
         "Xóa tất cả tài liệu", use_container_width=True, icon=":material/delete:"
     ):
-        confirm_dialog("Bạn có chắc chắn muốn xóa tất cả tài liệu", "delete_docs")
+        if "vector_db" in st.session_state:
+            confirm_dialog("Bạn có chắc chắn muốn xóa tất cả tài liệu", "delete_docs")
+        else:
+            noti_place_holder.error("Không có tài liệu để xóa")
+            time.sleep(3)
+            noti_place_holder.empty()
 
     change_button_color("Xóa tất cả tài liệu", "white", "#af2828")
 
     if "uploader_key" not in st.session_state:
         st.session_state.uploader_key = 0
 
-    uploaded_files = st.sidebar.file_uploader(
+    st.session_state.uploaded_files = st.sidebar.file_uploader(
         "Upload Files",
         type=["pdf", "doc", "docx", "odt"],
         accept_multiple_files=True,
         key=f"uploader_{st.session_state.uploader_key}",
     )
-
-    st.sidebar.divider()
 
     config_data = load_config_file()
 
@@ -104,7 +102,7 @@ def render_sidebar(embedder):
                 if model == st.session_state.selected_model:
                     index = i
             selected_model = st.selectbox(
-                "Model đang sử dụng:",
+                "Model:",
                 options=models,
                 key="model_selector_box",  # Key để tránh trùng lặp component
                 help="Chọn model LLM bạn muốn sử dụng cho hệ thống RAG",
@@ -120,10 +118,12 @@ def render_sidebar(embedder):
     change_button_color("Áp dụng", "black", "#007BFF")
 
     current_files_id = (
-        str([(f.name, f.size) for f in uploaded_files]) if uploaded_files else ""
+        str([(f.name, f.size) for f in st.session_state.uploaded_files])
+        if st.session_state.uploaded_files
+        else ""
     )
     last_files_id = st.session_state.get("last_files_id", "")
-    error_place_holder = st.empty()
+
     if current_files_id != last_files_id or apply_config:
         if apply_config:
             if st.session_state.selected_model != config_data.get("model"):
@@ -133,19 +133,20 @@ def render_sidebar(embedder):
                 chunk_size=st.session_state.get("chunk_size"),
                 chunk_overlap=st.session_state.get("chunk_overlap"),
             )
-            st.sidebar.success("Cấu hình đã được lưu thành công!", icon="✅")
-            time.sleep(0.5)
+            noti_place_holder.success("Cấu hình đã được lưu thành công!", icon="✅")
+            time.sleep(3)
+            noti_place_holder.empty()
             st.session_state.uploader_key += 1
-        if uploaded_files:
+        if st.session_state.uploaded_files:
             oversized_files = []
-            for f in uploaded_files:
-                if f not in files_size_validation(uploaded_files):
+            for f in st.session_state.uploaded_files:
+                if f not in files_size_validation(st.session_state.uploaded_files):
                     oversized_files.append(f)
             if len(oversized_files) > 0:
                 logger.info("Failed file size validation")
                 st.session_state.uploader_key += 1
                 filenames = [f.name for f in oversized_files]
-                error_place_holder.error(f"""
+                noti_place_holder.error(f"""
                 **Các tài liệu vượt quá dung lượng (200MB/file):**  
                 - {
                     '''
@@ -154,24 +155,29 @@ def render_sidebar(embedder):
                 **Vui lòng tải tài liệu lên lại**
                 """)
                 time.sleep(4)
-                error_place_holder.empty()
+                noti_place_holder.empty()
                 st.rerun()
             else:
                 start_time = time.time()
-                with st.sidebar.status("🔄"):
-                    st.session_state.vector_db = process_documents(
-                        uploaded_files, embedder
-                    )
-                    st.session_state.last_files_id = current_files_id
-                    procces_doc_time = time.time() - start_time
+                st.session_state.vector_db = process_documents(
+                    st.session_state.uploaded_files, embedder
+                )
+                st.session_state.last_files_id = current_files_id
+                procces_doc_time = time.time() - start_time
+                noti_place_holder.success(
+                    f"Đã tải {len(st.session_state.uploaded_files)} tài liệu"
+                )
+                time.sleep(3)
+                noti_place_holder.empty()
                 logger.info(f"DOC Proccessed time: {procces_doc_time}")
-                logger.info(f"Proccess {len(uploaded_files)} files")
+                logger.info(f"Proccess {len(st.session_state.uploaded_files)} files")
         else:
-            st.session_state.vector_db = None
+            del st.session_state.vector_db
             st.session_state.last_files_id = ""
 
-    if st.session_state.get("delete_docs"):
+    if "delete_docs" in st.session_state:
         delete_all_files()
+
     if st.session_state.get("delete_chat_his"):
         del st.session_state.messages
         if "current_session_file" in st.session_state:
@@ -194,7 +200,7 @@ def render_sidebar(embedder):
     # )
 
 
-@st.dialog("Cảnh báo")  ## Confirm delete dialog
+@st.dialog("Cảnh báo")
 def confirm_dialog(message, action_key):
     st.write(message)
     col1, col2 = st.columns(2)
@@ -207,7 +213,8 @@ def confirm_dialog(message, action_key):
 
     with col2:
         if st.button("Hủy", key="btn_cancel", use_container_width=True):
-            st.session_state[action_key] = False
+            if action_key in st.session_state:
+                del st.session_state[action_key]
             st.rerun()
 
 
