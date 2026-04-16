@@ -9,16 +9,26 @@ import re
 
 
 def highlight_text(text, query):
-    # Lấy các từ quan trọng từ query (bỏ qua các từ quá ngắn)
-    keywords = [w for w in query.split() if len(w) > 3]
+    if not query:
+        return text
+        
+    clean_query = re.sub(r'[?.,!]', '', query)
+    stop_words = ["cho", "những", "của", "này", "trong", "bao", "nhiêu"]
+    
+    # Lấy từ khóa dài > 2 ký tự
+    keywords = [w for w in clean_query.split() if len(w) > 2 and w.lower() not in stop_words]
+    keywords.sort(key=len, reverse=True)
+    
+    highlighted = text
     for word in keywords:
-        # Sử dụng Regex để thay thế không phân biệt hoa thường
         try:
-            pattern = re.compile(re.escape(word), re.IGNORECASE)
-            text = pattern.sub(f"**{word}**", text) 
+            # Sử dụng HTML span để đổi màu chữ thành xanh dương và in đậm
+            pattern = re.compile(rf"\b({re.escape(word)})\b", re.IGNORECASE)
+            # \1 là để giữ nguyên chữ hoa/thường của văn bản gốc
+            highlighted = pattern.sub(r"<span style='color: #00aaff; font-weight: bold;'>\1</span>", highlighted)
         except:
             continue
-    return text
+    return highlighted
 def save_chat_history(messages):
     if not os.path.exists(HISTORY_DIR):
         os.makedirs(HISTORY_DIR)
@@ -52,18 +62,19 @@ def display_sources(details, user_query=""):
         st.markdown("---")
         st.caption("📚 Nguồn trích dẫn (Click để xem chi tiết):")
         
-        # Hiển thị các nguồn dưới dạng các nút nhỏ (popover)
         cols = st.columns(len(details) if len(details) < 3 else 3)
         for idx, item in enumerate(details):
             with cols[idx % 3]:
-                # Đây là phần "Cho phép người dùng click để xem context gốc"
                 with st.popover(f"📄 Trang {item['page']}"):
-                    st.markdown(f"**Tài liệu:** {item['source']}")
-                    st.markdown("**Nội dung gốc:**")
+                    st.markdown(f"**Tài liệu:** `{item['source']}`")
+                    st.markdown("---")
                     
-                    # Thực hiện highlight các đoạn liên quan đến câu hỏi
-                    highlighted_content = highlight_text(item['content'], user_query)
-                    st.info(highlighted_content)
+                    content = item['content']
+                    highlighted_content = highlight_text(content, user_query)
+                    
+                    st.markdown("**Nội dung đoạn văn:**")
+                    # THAY ĐỔI Ở ĐÂY: Thêm unsafe_allow_html=True
+                    st.markdown(f"<div style='border-left: 3px solid #00aaff; padding-left: 10px; font-style: italic;'>{highlighted_content}</div>", unsafe_allow_html=True)
 
 
 # --- GIAO DIỆN CHATBOX ---

@@ -4,6 +4,8 @@ import threading
 import tempfile
 import logging
 
+from langchain.retrievers.ensemble import EnsembleRetriever
+from langchain_community.retrievers import BM25Retriever
 import streamlit as st
 from langchain_community.vectorstores import FAISS
 from langchain_huggingface import HuggingFaceEmbeddings
@@ -14,11 +16,26 @@ from backend.chain_corag import evaluate
 
 
 def get_retriever(vector):
-    retriever = vector.as_retriever(
+    # 1. Tạo Vector Retriever (Semantic Search)
+    faiss_retriever = vector.as_retriever(
         search_type="similarity",
         search_kwargs={"k": 5},
     )
-    return retriever
+
+    # 2. Tạo BM25 Retriever (Keyword Search)
+    # Lấy toàn bộ document gốc đã lưu trong FAISS
+    all_docs = list(vector.docstore._dict.values())
+    bm25_retriever = BM25Retriever.from_documents(all_docs)
+    bm25_retriever.k = 5  # Lấy 5 kết quả tốt nhất theo từ khóa
+
+    # 3. Kết hợp cả hai bằng EnsembleRetriever
+    # Trọng lượng 0.7 cho Vector và 0.3 cho BM25 là tỉ lệ chuẩn nhất
+    ensemble_retriever = EnsembleRetriever(
+        retrievers=[faiss_retriever, bm25_retriever],
+        weights=[0.7, 0.3]
+    )
+    
+    return ensemble_retriever
 
 
 @st.cache_resource
@@ -187,9 +204,13 @@ def process_query(vector_db, model, user_input,chat_history_list=[]):
         t1.join()
         t2.join()
     else:
-        results["rag"] = model.invoke(user_input)
+        # Ngay cả khi không có doc, vẫn nên gửi history để AI nhớ tên user hoặc câu chào trước đó
+        prompt_text = get_prompt_template(user_input, formatted_history).format(
+            context="Không có tài liệu nào được tải lên.", user_input=user_input
+        )
+        results["rag"] = model.invoke(prompt_text)
 
         res_time = time.time() - start_time
-        logger.info(f"Respront time with no doc: {res_time}")
+        logger.info(f"Response time with no doc: {res_time}")
         logger.info(f"Response with no doc: {results['rag']}")
     return results
