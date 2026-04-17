@@ -6,8 +6,9 @@ import logging
 
 import streamlit as st
 from langchain_community.vectorstores import FAISS
-from langchain_huggingface import HuggingFaceEmbeddings
 
+# from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_community.embeddings import OpenVINOEmbeddings
 from backend.file_loader import load_document, split_text
 from backend.model import get_prompt_template
 from backend.chain_corag import evaluate
@@ -24,12 +25,11 @@ def get_retriever(vector):
 @st.cache_resource
 def get_embedder():
     model_name = "sentence-transformers/paraphrase-multilingual-mpnet-base-v2"
-    model_kwargs = {"device": "cpu"}
-    encode_kwargs = {"normalize_embeddings": True}
-
-    return HuggingFaceEmbeddings(
-        model_name=model_name, model_kwargs=model_kwargs, encode_kwargs=encode_kwargs
-    )
+    model_kwargs = {
+        "device": "GPU",
+        "compile": True,
+    }
+    return OpenVINOEmbeddings(model_name_or_path=model_name, model_kwargs=model_kwargs)
 
 
 def process_documents(uploaded_files, embedder):  # TRÍCH VECTOR DATABASE
@@ -75,7 +75,6 @@ def extract_sources(docs):  # TRÍCH NGUỒN TỪ DOC
     for doc in docs:
         source_name = doc.metadata.get("source", "Unknown")
         page = doc.metadata.get("page", "?")
-        # Định dạng: "Tên file (Trang X)"
         source_str = f"{source_name} (Trang {page})" if page != "?" else source_name
         if source_str not in sources:
             sources.append(source_str)
@@ -118,7 +117,7 @@ def process_query(vector_db, model, user_input, chat_history_list=[]):
         related_docs = retriever.invoke(user_input)
         retrieved_time = time.time() - start_time
         logger.info(f"Retrieved time: {retrieved_time}")
-
+        logger.info(f"Responding with model: {st.session_state.selected_model}")
         # Lấy nguồn cho RAG
         results["rag_sources"] = extract_sources(related_docs)
 

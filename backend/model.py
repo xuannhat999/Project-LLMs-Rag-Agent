@@ -12,12 +12,12 @@ def get_prompt_template(user_input):
     is_vn = any(c in user_input.lower() for c in vn_chars)
 
     if is_vn:
-        return f"""Bạn là một trợ lý ảo thông minh. Dưới đây là lịch sử cuộc trò chuyện và ngữ cảnh tài liệu.nếu bạn không biết chỉ cần bạn trả lời không biết.BẮT BUỘC bằng TIẾNG VIỆT
+        return f"""Bạn là một trợ lý ảo thông minh. Dưới đây là ngữ cảnh tài liệu.nếu bạn không biết chỉ cần bạn trả lời không biết.BẮT BUỘC bằng TIẾNG VIỆT
 Ngữ cảnh:{{context}}
 Câu hỏi: {{user_input}}
 Trả lời (ngắn gọn 3-4 câu, bằng tiếng Việt): """
 
-    return f"""You are a helpful assistant. Below is the chat history and document context.If you don't know the answer just response you don't know
+    return f"""You are a helpful assistant. Below is document context.If you don't know the answer just response you don't know
 Context:{{context}}
 Question: {{user_input}}
 Answer (concise 3-4 sentences): """
