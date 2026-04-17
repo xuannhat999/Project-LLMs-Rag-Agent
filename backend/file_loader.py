@@ -100,17 +100,20 @@ def get_file_size(file):
 def files_size_validation(files):
     validated_files = []
     for f in files:
-        if get_file_size(f) < 200:
+        if get_file_size(f) < 50:
             validated_files.append(f)
     return validated_files
 
 
 def delete_all_files():
-    del st.session_state.vector_db
-    del st.session_state.uploaded_files
+    if "vector_db" in st.session_state:
+        del st.session_state.vector_db
+        del st.session_state.uploaded_files
     st.session_state.last_files_id = ""
     if "uploader_key" not in st.session_state:
         st.session_state.uploader_key = 0
-    st.session_state.uploader_key += 1024
-    del st.session_state.delete_docs
+    else:
+        st.session_state.uploader_key += 1
+    if "delete_docs" in st.session_state:
+        del st.session_state.delete_docs
     st.rerun()

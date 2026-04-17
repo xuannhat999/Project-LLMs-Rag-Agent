@@ -4,8 +4,6 @@ import threading
 import tempfile
 import logging
 
-from langchain.retrievers.ensemble import EnsembleRetriever
-from langchain_community.retrievers import BM25Retriever
 import streamlit as st
 from langchain_community.vectorstores import FAISS
 from langchain_huggingface import HuggingFaceEmbeddings
@@ -16,26 +14,11 @@ from backend.chain_corag import evaluate
 
 
 def get_retriever(vector):
-    # 1. Tạo Vector Retriever (Semantic Search)
     faiss_retriever = vector.as_retriever(
         search_type="similarity",
-        search_kwargs={"k": 5},
+        search_kwargs={"k": 4},
     )
-
-    # 2. Tạo BM25 Retriever (Keyword Search)
-    # Lấy toàn bộ document gốc đã lưu trong FAISS
-    all_docs = list(vector.docstore._dict.values())
-    bm25_retriever = BM25Retriever.from_documents(all_docs)
-    bm25_retriever.k = 5  # Lấy 5 kết quả tốt nhất theo từ khóa
-
-    # 3. Kết hợp cả hai bằng EnsembleRetriever
-    # Trọng lượng 0.7 cho Vector và 0.3 cho BM25 là tỉ lệ chuẩn nhất
-    ensemble_retriever = EnsembleRetriever(
-        retrievers=[faiss_retriever, bm25_retriever],
-        weights=[0.7, 0.3]
-    )
-    
-    return ensemble_retriever
+    return faiss_retriever
 
 
 @st.cache_resource
@@ -99,7 +82,7 @@ def extract_sources(docs):  # TRÍCH NGUỒN TỪ DOC
     return sources
 
 
-def process_query(vector_db, model, user_input,chat_history_list=[]):
+def process_query(vector_db, model, user_input, chat_history_list=[]):
     # Nếu có context từ doc:
     # return {
     #   "rag": Response của RAG,
@@ -115,16 +98,7 @@ def process_query(vector_db, model, user_input,chat_history_list=[]):
     #   "rag_sources": document nguồn liên quan từ rag
     #   "corag_sources": []
     # }
-    #
-    # Chuyển đổi danh sách tin nhắn từ session_state thành chuỗi văn bản
-    formatted_history = ""
-    # Lấy tối đa 5 cặp hội thoại gần nhất để tránh quá tải bộ nhớ (Context Window)
-    recent_messages = chat_history_list[-6:] 
-    for msg in recent_messages:
-        role = "Người dùng" if msg["role"] == "user" else "Trợ lý"
-        # Lấy nội dung câu trả lời (ưu tiên lấy từ corag nếu có, không thì lấy content)
-        content = msg.get("corag_content") or msg.get("rag_content") or msg.get("content", "")
-        formatted_history += f"{role}: {content}\n"
+
     start_time = time.time()
 
     logging.basicConfig(level=logging.INFO)
@@ -132,12 +106,12 @@ def process_query(vector_db, model, user_input,chat_history_list=[]):
     logger.info(f"Proccessing query: {user_input}")
 
     results = {
-        "rag": None, 
-        "corag": None, 
-        "rag_sources": [], 
+        "rag": None,
+        "corag": None,
+        "rag_sources": [],
         "corag_sources": [],
-        "rag_details": [],   
-        "corag_details": []  
+        "rag_details": [],
+        "corag_details": [],
     }
     if vector_db is not None:
         retriever = get_retriever(vector_db)
@@ -151,18 +125,20 @@ def process_query(vector_db, model, user_input,chat_history_list=[]):
         # Lưu chi tiết cho RAG
         results["rag_details"] = [
             {
-                "content": doc.page_content, 
+                "content": doc.page_content,
                 "source": doc.metadata.get("source", "Unknown"),
-                "page": doc.metadata.get("page", "?")
-            } for doc in related_docs
+                "page": doc.metadata.get("page", "?"),
+            }
+            for doc in related_docs
         ]
 
         def process_rag():
             logger.info("Started procces RAG !")
             context = "\n\n".join([doc.page_content for doc in related_docs])
-            prompt_text = get_prompt_template(user_input, formatted_history).format(
+            prompt_text = get_prompt_template(user_input).format(
                 context=context, user_input=user_input
             )
+            logger.info("RAG begin thinking...")
             results["rag"] = model.invoke(prompt_text)
 
             response_time_rag = time.time() - start_time
@@ -170,7 +146,7 @@ def process_query(vector_db, model, user_input,chat_history_list=[]):
             logger.info(f"Response (RAG): {results['rag']}")
 
         def proccess_corag():
-            logger.info("Started procces CoRAG")
+            logger.info("Started procces CoRAG !")
             score, validated_docs = evaluate(user_input, related_docs)
             evaluate_time = time.time() - start_time
             logger.info(f"Evaluate time (CoRAG): {evaluate_time}")
@@ -179,18 +155,19 @@ def process_query(vector_db, model, user_input,chat_history_list=[]):
                 # Lưu chi tiết cho CoRAG
                 results["corag_details"] = [
                     {
-                        "content": d.page_content, 
+                        "content": d.page_content,
                         "source": d.metadata.get("source", "Unknown"),
-                        "page": d.metadata.get("page", "?")
-                    } for d in validated_docs
+                        "page": d.metadata.get("page", "?"),
+                    }
+                    for d in validated_docs
                 ]
                 context = "\n\n".join(
                     [d.page_content for d in validated_docs]
                 )  # .page_content vì giờ là object
-                prompt = get_prompt_template(user_input, formatted_history).format(
+                prompt = get_prompt_template(user_input).format(
                     context=context, user_input=user_input
                 )
-                logger.info(f"CoRAG Prompt: \n{prompt}")
+                logger.info("CoRAG begin thinking...")
                 results["corag"] = model.invoke(prompt)
 
                 response_time_corag = time.time() - start_time
@@ -204,12 +181,7 @@ def process_query(vector_db, model, user_input,chat_history_list=[]):
         t1.join()
         t2.join()
     else:
-        # Ngay cả khi không có doc, vẫn nên gửi history để AI nhớ tên user hoặc câu chào trước đó
-        prompt_text = get_prompt_template(user_input, formatted_history).format(
-            context="Không có tài liệu nào được tải lên.", user_input=user_input
-        )
-        results["rag"] = model.invoke(prompt_text)
-
+        results["rag"] = model.invoke(user_input)
         res_time = time.time() - start_time
         logger.info(f"Response time with no doc: {res_time}")
         logger.info(f"Response with no doc: {results['rag']}")

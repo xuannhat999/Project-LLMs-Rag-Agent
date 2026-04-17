@@ -3,6 +3,8 @@ import os
 import time
 import logging
 
+from streamlit.runtime.state import session_state
+
 from backend.chain_rag import process_documents
 import json
 import streamlit.components.v1 as components
@@ -137,7 +139,8 @@ def render_sidebar(embedder):
             time.sleep(3)
             noti_place_holder.empty()
             st.session_state.uploader_key += 1
-        if st.session_state.uploaded_files:
+
+        if "uploaded_files" in st.session_state:
             oversized_files = []
             for f in st.session_state.uploaded_files:
                 if f not in files_size_validation(st.session_state.uploaded_files):
@@ -147,7 +150,7 @@ def render_sidebar(embedder):
                 st.session_state.uploader_key += 1
                 filenames = [f.name for f in oversized_files]
                 noti_place_holder.error(f"""
-                **Các tài liệu vượt quá dung lượng (200MB/file):**  
+                **Các tài liệu vượt quá dung lượng (50MB/file):**  
                 - {
                     '''
                 - '''.join(filenames)
@@ -157,7 +160,7 @@ def render_sidebar(embedder):
                 time.sleep(4)
                 noti_place_holder.empty()
                 st.rerun()
-            else:
+            elif len(st.session_state.uploaded_files) > 0:
                 start_time = time.time()
                 st.session_state.vector_db = process_documents(
                     st.session_state.uploaded_files, embedder

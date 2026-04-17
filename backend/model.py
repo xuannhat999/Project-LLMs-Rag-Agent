@@ -1,4 +1,3 @@
-from numpy import exceptions
 import streamlit as st
 from langchain_ollama import OllamaLLM
 import requests
@@ -8,29 +7,19 @@ import json
 CONFIG_FILE = "config.json"
 
 
-def get_prompt_template(user_input, chat_history=""):
+def get_prompt_template(user_input):
     vn_chars = "àáảãạăâèéêìíòóôơùúưỳýđịĩủũụừứặắằếềốồớờộỗỡ"
     is_vn = any(c in user_input.lower() for c in vn_chars)
 
     if is_vn:
-        return f"""Bạn là một trợ lý ảo thông minh. Dưới đây là lịch sử cuộc trò chuyện và ngữ cảnh tài liệu.
-Lịch sử trò chuyện:
-{chat_history}
-
-Ngữ cảnh tài liệu:
-{{context}}
-
-Câu hỏi mới nhất: {{user_input}}
+        return f"""Bạn là một trợ lý ảo thông minh. Dưới đây là lịch sử cuộc trò chuyện và ngữ cảnh tài liệu.nếu bạn không biết chỉ cần bạn trả lời không biết.BẮT BUỘC bằng TIẾNG VIỆT
+Ngữ cảnh:{{context}}
+Câu hỏi: {{user_input}}
 Trả lời (ngắn gọn 3-4 câu, bằng tiếng Việt): """
 
-    return f"""You are a helpful assistant. Below is the chat history and document context.
-Chat History:
-{chat_history}
-
-Document Context:
-{{context}}
-
-New Question: {{user_input}}
+    return f"""You are a helpful assistant. Below is the chat history and document context.If you don't know the answer just response you don't know
+Context:{{context}}
+Question: {{user_input}}
 Answer (concise 3-4 sentences): """
 
 
@@ -39,7 +28,7 @@ def get_model():
     if "selected_model" in st.session_state:
         model = OllamaLLM(
             model=st.session_state.selected_model,
-            num_thread=10,
+            num_thread=6,
             num_ctx=2048,
             temperature=0.1,
         )
