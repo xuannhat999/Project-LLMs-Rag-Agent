@@ -62,7 +62,7 @@ else:
 embedder, model = init()
 
 st.set_page_config(
-    page_title="Test Streamlit UI - OSSD 2026", page_icon="🧪", layout="centered"
+    page_title="Test Streamlit UI - OSSD 2026", page_icon="🧪", layout="wide"
 )
 
 st.title("Project LLMs-RAG-Agent")

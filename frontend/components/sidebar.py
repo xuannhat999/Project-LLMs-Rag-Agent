@@ -3,8 +3,6 @@ import os
 import time
 import logging
 
-from streamlit.runtime.state import session_state
-
 from backend.chain_rag import process_documents
 import json
 import streamlit.components.v1 as components
@@ -162,6 +160,7 @@ def render_sidebar(embedder):
                 time.sleep(4)
                 noti_place_holder.empty()
                 st.rerun()
+
             elif len(st.session_state.uploaded_files) > 0:
                 start_time = time.time()
                 st.session_state.vector_db = process_documents(
@@ -172,7 +171,7 @@ def render_sidebar(embedder):
                 noti_place_holder.success(
                     f"Đã tải {len(st.session_state.uploaded_files)} tài liệu"
                 )
-                time.sleep(3)
+                time.sleep(2)
                 noti_place_holder.empty()
                 logger.info(f"DOC Proccessed time: {procces_doc_time}")
                 logger.info(f"Proccess {len(st.session_state.uploaded_files)} files")

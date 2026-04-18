@@ -1,9 +1,9 @@
 import streamlit as st
-from streamlit.runtime.state import session_state
 from backend.chain_rag import process_query  # Giữ nguyên hàm gốc của bạn
-import os, json
+import os
+import json
 from datetime import datetime
-from backend.chat import HISTORY_DIR, get_chat_history
+from backend.chat import HISTORY_DIR
 import re
 
 
@@ -92,6 +92,10 @@ def render_chatbox(model):
     st.markdown(
         """
     <style>
+    .block-container {
+        padding-top: 1.5rem !important;
+        width: 80% !important; /* Độ rộng tổng thể của trang */
+    }
     /* Ẩn avatar mặc định của Streamlit */
     [data-testid="stChatMessageAvatarUser"], 
     [data-testid="stChatMessageAvatarAssistant"] {
@@ -148,13 +152,19 @@ def render_chatbox(model):
     
     /* Chỉnh Chat Input sát đáy */
     [data-testid="stChatInput"] {
-        padding-bottom: 20px !important;
+        position: fixed;
+        bottom: 20px;
+        z-index: 99;
+        border: 1px solid #CCCCCC !important;
+        border-radius: 10px !important;
+        width: 60%;
+        height: 10%;
+        box-shadow: 0px 0px 25px 4px rgba(0, 0, 0, 0.5) !important;
     }
     </style>
     """,
         unsafe_allow_html=True,
     )
-
     vector_db = st.session_state.get("vector_db")
 
     # Khởi tạo tin nhắn nếu chưa có
@@ -204,7 +214,6 @@ def render_chatbox(model):
                         col2.success(
                             f"**✨ CoRAG (Verified):**\n\n{msg['corag_content']}"
                         )
-
     # 3. XỬ LÝ KHI NGƯỜI DÙNG NHẬP CÂU HỎI MỚI
     if user_input:
         with chat_placeholder:
