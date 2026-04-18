@@ -81,7 +81,7 @@ def extract_sources(docs):  # TRÍCH NGUỒN TỪ DOC
     return sources
 
 
-def process_query(vector_db, model, user_input, chat_history_list=[]):
+def process_query(vector_db, model, user_input):
     # Nếu có context từ doc:
     # return {
     #   "rag": Response của RAG,
@@ -97,9 +97,6 @@ def process_query(vector_db, model, user_input, chat_history_list=[]):
     #   "rag_sources": document nguồn liên quan từ rag
     #   "corag_sources": []
     # }
-
-    start_time = time.time()
-
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)
     logger.info(f"Proccessing query: {user_input}")
@@ -112,6 +109,7 @@ def process_query(vector_db, model, user_input, chat_history_list=[]):
         "rag_details": [],
         "corag_details": [],
     }
+    start_time = time.time()
     if vector_db is not None:
         retriever = get_retriever(vector_db)
         related_docs = retriever.invoke(user_input)
@@ -121,7 +119,6 @@ def process_query(vector_db, model, user_input, chat_history_list=[]):
         # Lấy nguồn cho RAG
         results["rag_sources"] = extract_sources(related_docs)
 
-        # Lưu chi tiết cho RAG
         results["rag_details"] = [
             {
                 "content": doc.page_content,
@@ -151,7 +148,6 @@ def process_query(vector_db, model, user_input, chat_history_list=[]):
             logger.info(f"Evaluate time (CoRAG): {evaluate_time}")
             if score == "success":
                 results["corag_sources"] = extract_sources(validated_docs)
-                # Lưu chi tiết cho CoRAG
                 results["corag_details"] = [
                     {
                         "content": d.page_content,

@@ -33,19 +33,21 @@ def render_sidebar(embedder):
     with st.sidebar.expander(
         "Lịch sử trò chuyện", expanded=False, icon=":material/chat:"
     ):
-        for f in history_files:
-            display_name = f.get("title")
-            if st.button(
-                f"{display_name}",
-                key=f"btn_{f.get('filename')}",
-                use_container_width=True,
-            ):
-                with open(
-                    os.path.join(HISTORY_DIR, f.get("filename")), "r", encoding="utf-8"
-                ) as file:
-                    st.session_state.messages = json.load(file)
-                    st.session_state.current_session_file = f.get("filename")
-                st.rerun()
+        history_container = st.container(height=300, border=False)
+        with history_container:
+            for f in history_files:
+                display_name = f.get("title")
+                # Nút bấm sẽ nằm gọn trong vùng cuộn
+                if st.button(
+                    f"{display_name}",
+                    key=f"btn_{f.get('filename')}",
+                    use_container_width=True,
+                ):
+                    file_path = os.path.join(HISTORY_DIR, f.get("filename"))
+                    with open(file_path, "r", encoding="utf-8") as file:
+                        st.session_state.messages = json.load(file)
+                        st.session_state.current_session_file = f.get("filename")
+                    st.rerun()
 
     if st.sidebar.button(
         "Xóa lịch sử chat", use_container_width=True, icon=":material/delete:"

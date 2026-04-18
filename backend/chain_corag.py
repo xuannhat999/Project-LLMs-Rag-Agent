@@ -17,15 +17,14 @@ def evaluate(query, retrieved_docs):
     # Tạo các cặp (query, doc)
     pairs = [[query, doc.page_content] for doc in retrieved_docs]
 
-    # Dự đoán điểm số cho tất cả các cặp cùng lúc (rất nhanh)
+    # Dự đoán điểm số cho tất cả các cặp cùng lúc
     scores = cross_encoder.predict(pairs)
     logger.info(f"Score (CoRAG): {scores}")
-    validated_docs = []  # Thay đổi: Lưu cả object Document thay vì chỉ text
+    validated_docs = []
     success = False
 
     for i, score in enumerate(scores):
         if float(score) > 0.3:
-            #     logger.info(f"Validated context with score: {score}")
             validated_docs.append(retrieved_docs[i])
             success = True
     return ("success" if success else "fallback_required"), validated_docs

@@ -7,28 +7,34 @@ from backend.chat import HISTORY_DIR, get_chat_history
 import re
 
 
-
 def highlight_text(text, query):
     if not query:
         return text
-        
-    clean_query = re.sub(r'[?.,!]', '', query)
+
+    clean_query = re.sub(r"[?.,!]", "", query)
     stop_words = ["cho", "những", "của", "này", "trong", "bao", "nhiêu"]
-    
+
     # Lấy từ khóa dài > 2 ký tự
-    keywords = [w for w in clean_query.split() if len(w) > 2 and w.lower() not in stop_words]
+    keywords = [
+        w for w in clean_query.split() if len(w) > 2 and w.lower() not in stop_words
+    ]
     keywords.sort(key=len, reverse=True)
-    
+
     highlighted = text
     for word in keywords:
         try:
             # Sử dụng HTML span để đổi màu chữ thành xanh dương và in đậm
             pattern = re.compile(rf"\b({re.escape(word)})\b", re.IGNORECASE)
             # \1 là để giữ nguyên chữ hoa/thường của văn bản gốc
-            highlighted = pattern.sub(r"<span style='color: #00aaff; font-weight: bold;'>\1</span>", highlighted)
+            highlighted = pattern.sub(
+                r"<span style='color: #00aaff; font-weight: bold;'>\1</span>",
+                highlighted,
+            )
         except:
             continue
     return highlighted
+
+
 def save_chat_history(messages):
     if not os.path.exists(HISTORY_DIR):
         os.makedirs(HISTORY_DIR)
@@ -61,20 +67,23 @@ def display_sources(details, user_query=""):
     if details:
         st.markdown("---")
         st.caption("📚 Nguồn trích dẫn (Click để xem chi tiết):")
-        
+
         cols = st.columns(len(details) if len(details) < 3 else 3)
         for idx, item in enumerate(details):
             with cols[idx % 3]:
                 with st.popover(f"📄 Trang {item['page']}"):
                     st.markdown(f"**Tài liệu:** `{item['source']}`")
                     st.markdown("---")
-                    
-                    content = item['content']
+
+                    content = item["content"]
                     highlighted_content = highlight_text(content, user_query)
-                    
+
                     st.markdown("**Nội dung đoạn văn:**")
                     # THAY ĐỔI Ở ĐÂY: Thêm unsafe_allow_html=True
-                    st.markdown(f"<div style='border-left: 3px solid #00aaff; padding-left: 10px; font-style: italic;'>{highlighted_content}</div>", unsafe_allow_html=True)
+                    st.markdown(
+                        f"<div style='border-left: 3px solid #00aaff; padding-left: 10px; font-style: italic;'>{highlighted_content}</div>",
+                        unsafe_allow_html=True,
+                    )
 
 
 # --- GIAO DIỆN CHATBOX ---
@@ -174,8 +183,10 @@ def render_chatbox(model):
                                 unsafe_allow_html=True,
                             )
                             st.markdown(msg["rag_content"])
-                             # Hiển thị nguồn có kèm nội dung để click
-                            display_sources(msg.get("rag_details", []), msg.get("user_query", ""))
+                            # Hiển thị nguồn có kèm nội dung để click
+                            display_sources(
+                                msg.get("rag_details", []), msg.get("user_query", "")
+                            )
                         with c2:
                             st.markdown(
                                 "<div class='column-header'>🛡️ MÔ HÌNH CoRAG</div>",
@@ -183,7 +194,9 @@ def render_chatbox(model):
                             )
                             st.markdown(msg["corag_content"])
                             # HIỂN THỊ NGUỒN CORAG
-                            display_sources(msg.get("corag_details", []), msg.get("user_query", ""))
+                            display_sources(
+                                msg.get("corag_details", []), msg.get("user_query", "")
+                            )
                     else:
                         # Trường hợp tin nhắn cũ hoặc tin nhắn thông báo
                         col1, col2 = st.columns(2)
@@ -224,7 +237,7 @@ def render_chatbox(model):
                         # GỌI HÀM LOGIC CỦA FILE 1 (Workflow gốc)
                         # Đảm bảo hàm process_query trả về dict có key 'rag' và 'corag'
                         # Chỉ gửi các tin nhắn trước đó, không gửi câu vừa append
-                        results = process_query(vector_db, model, user_input, st.session_state.messages[:-1])
+                        results = process_query(vector_db, model, user_input)
 
                         # Hiển thị kết quả vào đúng cột
                         rag_area.markdown(
@@ -239,20 +252,26 @@ def render_chatbox(model):
                         with col1:
                             display_sources(results.get("rag_details", []), user_input)
                         with col2:
-                            display_sources(results.get("corag_details", []), user_input)
+                            display_sources(
+                                results.get("corag_details", []), user_input
+                            )
                         # -----------------------------------------------------
                         # 4. LƯU VÀO LỊCH SỬ
                         st.session_state.messages.append(
                             {
                                 "role": "assistant",
                                 "content": "So sánh RAG & CoRAG",  # Text ẩn cho logic
-                                "user_query": user_input,        # QUAN TRỌNG: Lưu lại câu hỏi để highlight từ khóa
+                                "user_query": user_input,  # QUAN TRỌNG: Lưu lại câu hỏi để highlight từ khóa
                                 "rag_content": results.get("rag"),
                                 "corag_content": corag_text,
                                 "rag_sources": results.get("rag_sources"),
                                 "corag_sources": results.get("corag_sources"),
-                                "rag_details": results.get("rag_details"),     # Danh sách object chứa content, page...
-                                "corag_details": results.get("corag_details")   # Danh sách object chứa content, page...
+                                "rag_details": results.get(
+                                    "rag_details"
+                                ),  # Danh sách object chứa content, page...
+                                "corag_details": results.get(
+                                    "corag_details"
+                                ),  # Danh sách object chứa content, page...
                             }
                         )
                         save_chat_history(st.session_state.messages)
@@ -260,29 +279,3 @@ def render_chatbox(model):
                             st.rerun()
                     except Exception as e:
                         st.error(f"Đã xảy ra lỗi khi xử lý: {str(e)}")
-            # # Trả lời của Assistant
-            # with st.chat_message("assistant"):
-            #     with st.spinner("Đang truy vấn song song..."):
-            #         results = process_query(vector_db, model, user_input)
-            #
-            #         # HIỂN THỊ CHIA CỘT NGAY LẬP TỨC
-            #         col1, col2 = st.columns(2)
-            #         with col1:
-            #             st.info(f"**📍 Vector RAG:**\n\n{results['rag']}")
-            #         with col2:
-            #             corag_text = (
-            #                 results["corag"]
-            #                 if results["corag"]
-            #                 else "Không đủ dữ liệu tin cậy để đánh giá."
-            #             )
-            #             st.success(f"**✨ CoRAG (Verified):**\n\n{corag_text}")
-            #
-            #         # LƯU VÀO HISTORY (Sử dụng cấu trúc mới)
-            #         st.session_state.messages.append(
-            #             {
-            #                 "role": "assistant",
-            #                 "rag_content": results["rag"],
-            #                 "corag_content": results["corag"],
-            #             }
-            #         )
-            #         save_chat_history(st.session_state.messages)
