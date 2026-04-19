@@ -5,6 +5,7 @@ import json
 from datetime import datetime
 from backend.chat import HISTORY_DIR
 import re
+import streamlit.components.v1 as components
 
 
 def highlight_text(text, query):
@@ -86,42 +87,48 @@ def display_sources(details, user_query=""):
                     )
 
 
-def auto_scroll():
+def scroll_and_focus():  # Cuộn xuống tin nhắn gần nhất và focus vào chat input
     # Tạo ID duy nhất cho mỗi lần nhấn Enter dựa trên số lượng tin nhắn
     msg_count = len(st.session_state.get("messages", []))
     anchor_id = f"anchor-{msg_count}"
-    
+
     # Đặt điểm neo với ID động này ở cuối cùng
-    st.markdown(f"<div id='{anchor_id}' style='height: 10px; margin-bottom: 50px;'></div>", unsafe_allow_html=True)
-    
-    st.components.v1.html(
+    st.markdown(
+        f"<div id='{anchor_id}'></div>",
+        unsafe_allow_html=True,
+    )
+    components.html(
         f"""
         <script>
-            function scrollToAnchor() {{
+            function scrollAndFocus() {{
                 const anchor = window.parent.document.getElementById('{anchor_id}');
                 if (anchor) {{
-                    anchor.scrollIntoView({{behavior: 'smooth', block: 'end'}});
+                    anchor.scrollIntoView({{behavior: 'smooth', block: 'center'}});
                 }}
+                const chatInput = window.parent.document.querySelector('[data-testid="stChatInput"] textarea');
+                    if (chatInput) {{
+                        chatInput.focus();
+                    }}
             }}
 
             //  Chạy ngay lập tức
-            scrollToAnchor();
+            scrollAndFocus();
 
             //  Chạy sau khi các element cơ bản đã render (300ms)
-            setTimeout(scrollToAnchor, 300);
-
+            setTimeout(scrollAndFocus, 300);
+            
             //  Sử dụng MutationObserver để bám theo tin nhắn AI đang stream hoặc nở ra
-            const observer = new MutationObserver(() => scrollToAnchor());
+            const observer = new MutationObserver(() => scrollAndFocus());
             observer.observe(window.parent.document.body, {{
                 childList: true,
                 subtree: true
             }});
 
-            // Ngắt observer sau 4 giây để tránh tốn tài nguyên
-            setTimeout(() => observer.disconnect(), 4000);
+            // Ngắt observer sau 2 giây để tránh tốn tài nguyên
+            setTimeout(() => observer.disconnect(), 2000);
         </script>
         """,
-        height=0
+        height=0,
     )
 
 
@@ -260,17 +267,13 @@ def render_chatbox(model):
                         col2.success(
                             f"**✨ CoRAG (Verified):**\n\n{msg['corag_content']}"
                         )
-    # 3. XỬ LÝ KHI NGƯỜI DÙNG NHẬP CÂU HỎI MỚI
+    # XỬ LÝ KHI NGƯỜI DÙNG NHẬP CÂU HỎI MỚI
     if user_input:
         with chat_container:
-            is_new_session = len(st.session_state.messages) == 0
-
             # Hiển thị câu hỏi User
             st.session_state.messages.append({"role": "user", "content": user_input})
             with st.chat_message("user"):
                 st.markdown(user_input)
-
-
 
             # Phản hồi của Assistant
             with st.chat_message("assistant"):
@@ -289,10 +292,10 @@ def render_chatbox(model):
                     )
                     corag_area = st.empty()
 
-                      # Vùng trống để cập nhật sau
-
+                    # Vùng trống để cập nhật sau
                 with st.spinner("Đang truy vấn dữ liệu và so sánh..."):
                     try:
+                        scroll_and_focus()
                         # GỌI HÀM LOGIC CỦA FILE 1 (Workflow gốc)
                         # Đảm bảo hàm process_query trả về dict có key 'rag' và 'corag'
                         # Chỉ gửi các tin nhắn trước đó, không gửi câu vừa append
@@ -314,7 +317,7 @@ def render_chatbox(model):
                             display_sources(
                                 results.get("corag_details", []), user_input
                             )
-
+                        scroll_and_focus()
                         # -----------------------------------------------------
                         # 4. LƯU VÀO LỊCH SỬ
                         st.session_state.messages.append(
@@ -337,9 +340,9 @@ def render_chatbox(model):
                         save_chat_history(st.session_state.messages)
                     except Exception as e:
                         st.error(f"Đã xảy ra lỗi khi xử lý: {str(e)}")
-    
-    auto_scroll()
 
-    
+    scroll_and_focus()
+    if st.session_state.get("scroll"):
+        scroll_and_focus()
+        st.session_state.scroll = False
 
-   

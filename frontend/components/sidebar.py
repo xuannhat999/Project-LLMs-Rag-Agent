@@ -106,7 +106,7 @@ def render_sidebar(embedder):
             selected_model = st.selectbox(
                 "Model:",
                 options=models,
-                key="model_selector_box",  # Key để tránh trùng lặp component
+                key="model_selector_box",
                 help="Chọn model LLM bạn muốn sử dụng cho hệ thống RAG",
                 index=index,
             )
@@ -117,7 +117,6 @@ def render_sidebar(embedder):
                 st.session_state.selected_model = selected_model
 
         apply_config = st.button("Áp dụng", use_container_width=True)
-    change_button_color("Áp dụng", "black", "#007BFF")
 
     current_files_id = (
         str([(f.name, f.size) for f in st.session_state.uploaded_files])
@@ -157,7 +156,7 @@ def render_sidebar(embedder):
                 }  
                 **Vui lòng tải tài liệu lên lại**
                 """)
-                time.sleep(4)
+                time.sleep(3)
                 noti_place_holder.empty()
                 st.rerun()
 
@@ -175,6 +174,8 @@ def render_sidebar(embedder):
                 noti_place_holder.empty()
                 logger.info(f"DOC Proccessed time: {procces_doc_time}")
                 logger.info(f"Proccess {len(st.session_state.uploaded_files)} files")
+                st.session_state.scroll = True
+                st.rerun()
         else:
             del st.session_state.vector_db
             st.session_state.last_files_id = ""
