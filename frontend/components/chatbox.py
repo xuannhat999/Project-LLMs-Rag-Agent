@@ -86,6 +86,45 @@ def display_sources(details, user_query=""):
                     )
 
 
+def auto_scroll():
+    # Tạo ID duy nhất cho mỗi lần nhấn Enter dựa trên số lượng tin nhắn
+    msg_count = len(st.session_state.get("messages", []))
+    anchor_id = f"anchor-{msg_count}"
+    
+    # Đặt điểm neo với ID động này ở cuối cùng
+    st.markdown(f"<div id='{anchor_id}' style='height: 10px; margin-bottom: 50px;'></div>", unsafe_allow_html=True)
+    
+    st.components.v1.html(
+        f"""
+        <script>
+            function scrollToAnchor() {{
+                const anchor = window.parent.document.getElementById('{anchor_id}');
+                if (anchor) {{
+                    anchor.scrollIntoView({{behavior: 'smooth', block: 'end'}});
+                }}
+            }}
+
+            //  Chạy ngay lập tức
+            scrollToAnchor();
+
+            //  Chạy sau khi các element cơ bản đã render (300ms)
+            setTimeout(scrollToAnchor, 300);
+
+            //  Sử dụng MutationObserver để bám theo tin nhắn AI đang stream hoặc nở ra
+            const observer = new MutationObserver(() => scrollToAnchor());
+            observer.observe(window.parent.document.body, {{
+                childList: true,
+                subtree: true
+            }});
+
+            // Ngắt observer sau 4 giây để tránh tốn tài nguyên
+            setTimeout(() => observer.disconnect(), 4000);
+        </script>
+        """,
+        height=0
+    )
+
+
 # --- GIAO DIỆN CHATBOX ---
 @st.fragment
 def render_chatbox(model):
@@ -95,6 +134,10 @@ def render_chatbox(model):
     .block-container {
         padding-top: 1.5rem !important;
         width: 80% !important; /* Độ rộng tổng thể của trang */
+    }
+
+    .main .block-container {
+        padding-bottom: 250px !important;
     }
     /* Ẩn avatar mặc định của Streamlit */
     [data-testid="stChatMessageAvatarUser"], 
@@ -107,6 +150,9 @@ def render_chatbox(model):
         padding: 10px 0px !important;
         background-color: transparent !important;
     }
+    /* làm trình duyệt cuộn mượt mà*/
+    
+    html{scroll-behavior: smooth;}
 
     /* STYLE CHO USER*/
     [data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarUser"]) div[data-testid="stMarkdownContainer"] {
@@ -172,12 +218,12 @@ def render_chatbox(model):
         st.session_state.messages = []
 
     # Tạo container hiển thị nội dung chat
-    chat_placeholder = st.container()
+    chat_container = st.container()
 
     # Ô nhập liệu
     user_input = st.chat_input("Nhập câu hỏi để so sánh RAG và CoRAG...", max_chars=500)
 
-    with chat_placeholder:
+    with chat_container:
         for msg in st.session_state.messages:
             with st.chat_message(msg["role"]):
                 if msg["role"] == "user":
@@ -216,13 +262,15 @@ def render_chatbox(model):
                         )
     # 3. XỬ LÝ KHI NGƯỜI DÙNG NHẬP CÂU HỎI MỚI
     if user_input:
-        with chat_placeholder:
+        with chat_container:
             is_new_session = len(st.session_state.messages) == 0
 
             # Hiển thị câu hỏi User
             st.session_state.messages.append({"role": "user", "content": user_input})
             with st.chat_message("user"):
                 st.markdown(user_input)
+
+
 
             # Phản hồi của Assistant
             with st.chat_message("assistant"):
@@ -239,7 +287,9 @@ def render_chatbox(model):
                         "<div class='column-header'>🛡️ MÔ HÌNH CoRAG</div>",
                         unsafe_allow_html=True,
                     )
-                    corag_area = st.empty()  # Vùng trống để cập nhật sau
+                    corag_area = st.empty()
+
+                      # Vùng trống để cập nhật sau
 
                 with st.spinner("Đang truy vấn dữ liệu và so sánh..."):
                     try:
@@ -264,6 +314,7 @@ def render_chatbox(model):
                             display_sources(
                                 results.get("corag_details", []), user_input
                             )
+
                         # -----------------------------------------------------
                         # 4. LƯU VÀO LỊCH SỬ
                         st.session_state.messages.append(
@@ -284,7 +335,11 @@ def render_chatbox(model):
                             }
                         )
                         save_chat_history(st.session_state.messages)
-                        if is_new_session:
-                            st.rerun()
                     except Exception as e:
                         st.error(f"Đã xảy ra lỗi khi xử lý: {str(e)}")
+    
+    auto_scroll()
+
+    
+
+   
