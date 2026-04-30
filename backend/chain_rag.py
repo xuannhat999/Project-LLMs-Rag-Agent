@@ -1,23 +1,44 @@
+import json
 import os
 import time
 import threading
 import tempfile
 import logging
 
+from numpy._core.multiarray import promote_types
 import streamlit as st
 from langchain_community.vectorstores import FAISS
 
 # from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.embeddings import OpenVINOEmbeddings
 from backend.file_loader import load_document, split_text
-from backend.model import get_prompt_template
+from backend.model import (
+    get_promt_template,
+    get_promt_with_memory,
+    get_promt_memory_no_cont,
+)
 from backend.chain_corag import evaluate
+
+
+def get_memory(data, k=5):
+    assistant_messages = [msg for msg in data if msg.get("role") == "assistant"]
+    memory = assistant_messages[-k:]
+    res = []
+    for mem in memory:
+        res.append(
+            {
+                "User query": mem.get("user_query"),
+                "Response_rag": mem.get("rag_content"),
+                "Response_corag": mem.get("corag_content"),
+            }
+        )
+    return res
 
 
 def get_retriever(vector):
     faiss_retriever = vector.as_retriever(
         search_type="similarity",
-        search_kwargs={"k": 4},
+        search_kwargs={"k": 3},
     )
     return faiss_retriever
 
@@ -109,6 +130,7 @@ def process_query(vector_db, model, user_input):
         "rag_details": [],
         "corag_details": [],
     }
+    memory = st.session_state.get("memory", None)
     start_time = time.time()
     if vector_db is not None:
         retriever = get_retriever(vector_db)
@@ -131,11 +153,18 @@ def process_query(vector_db, model, user_input):
         def process_rag():
             logger.info("Started procces RAG !")
             context = "\n\n".join([doc.page_content for doc in related_docs])
-            prompt_text = get_prompt_template(user_input).format(
-                context=context, user_input=user_input
-            )
+            if memory:
+                print(memory)
+                prompt = get_promt_with_memory(user_input).format(
+                    context=context, user_input=user_input, memory=memory
+                )
+            else:
+                print("No memory")
+                prompt = get_promt_template(user_input).format(
+                    context=context, user_input=user_input
+                )
             logger.info("RAG begin thinking...")
-            results["rag"] = model.invoke(prompt_text)
+            results["rag"] = model.invoke(prompt)
 
             response_time_rag = time.time() - start_time
             logger.info(f"Response time (RAG): {response_time_rag}")
@@ -159,9 +188,14 @@ def process_query(vector_db, model, user_input):
                 context = "\n\n".join(
                     [d.page_content for d in validated_docs]
                 )  # .page_content vì giờ là object
-                prompt = get_prompt_template(user_input).format(
-                    context=context, user_input=user_input
-                )
+                if memory:
+                    prompt = get_promt_with_memory(user_input).format(
+                        context=context, user_input=user_input, memory=memory
+                    )
+                else:
+                    prompt = get_promt_template(user_input).format(
+                        context=context, user_input=user_input
+                    )
                 logger.info("CoRAG begin thinking...")
                 results["corag"] = model.invoke(prompt)
 
@@ -176,7 +210,13 @@ def process_query(vector_db, model, user_input):
         t1.join()
         t2.join()
     else:
-        results["rag"] = model.invoke(user_input)
+        if memory:
+            prompt = get_promt_memory_no_cont(user_input=user_input).format(
+                user_input=user_input, memory=memory
+            )
+        else:
+            prompt = user_input
+        results["rag"] = model.invoke(prompt)
         res_time = time.time() - start_time
         logger.info(f"Response time with no doc: {res_time}")
         logger.info(f"Response with no doc: {results['rag']}")

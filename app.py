@@ -67,4 +67,5 @@ st.set_page_config(
 
 st.title("Project LLMs-RAG-Agent")
 render_sidebar(embedder=embedder)
+st.session_state.scroll = True
 render_chatbox(model=model)

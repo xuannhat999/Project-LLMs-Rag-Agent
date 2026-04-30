@@ -296,9 +296,6 @@ def render_chatbox(model):
                 with st.spinner("Đang truy vấn dữ liệu và so sánh..."):
                     try:
                         scroll_and_focus()
-                        # GỌI HÀM LOGIC CỦA FILE 1 (Workflow gốc)
-                        # Đảm bảo hàm process_query trả về dict có key 'rag' và 'corag'
-                        # Chỉ gửi các tin nhắn trước đó, không gửi câu vừa append
                         results = process_query(vector_db, model, user_input)
 
                         # Hiển thị kết quả vào đúng cột
@@ -340,9 +337,6 @@ def render_chatbox(model):
                         save_chat_history(st.session_state.messages)
                     except Exception as e:
                         st.error(f"Đã xảy ra lỗi khi xử lý: {str(e)}")
-
-    scroll_and_focus()
     if st.session_state.get("scroll"):
         scroll_and_focus()
         st.session_state.scroll = False
-

@@ -3,7 +3,7 @@ import os
 import time
 import logging
 
-from backend.chain_rag import process_documents
+from backend.chain_rag import process_documents, get_memory
 import json
 import streamlit.components.v1 as components
 from backend.model import load_config_file, save_config
@@ -43,8 +43,12 @@ def render_sidebar(embedder):
                 ):
                     file_path = os.path.join(HISTORY_DIR, f.get("filename"))
                     with open(file_path, "r", encoding="utf-8") as file:
-                        st.session_state.messages = json.load(file)
+                        data = json.load(file)
+                        st.session_state.messages = data
                         st.session_state.current_session_file = f.get("filename")
+                        memory = get_memory(data)
+                        st.session_state.memory = memory
+                        print("Memory loaded from sidebar: ", memory)
                     st.rerun()
 
     if st.sidebar.button(

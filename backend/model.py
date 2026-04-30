@@ -7,20 +7,52 @@ import json
 CONFIG_FILE = "config.json"
 
 
-def get_prompt_template(user_input):
+def get_promt_template(user_input):
     vn_chars = "àáảãạăâèéêìíòóôơùúưỳýđịĩủũụừứặắằếềốồớờộỗỡ"
     is_vn = any(c in user_input.lower() for c in vn_chars)
 
     if is_vn:
-        return f"""Bạn là một trợ lý ảo thông minh. Dưới đây là ngữ cảnh tài liệu.nếu bạn không biết chỉ cần bạn trả lời không biết.BẮT BUỘC bằng TIẾNG VIỆT
-Ngữ cảnh:{{context}}
-Câu hỏi: {{user_input}}
+        return """Bạn là một trợ lý ảo thông minh. Dưới đây là ngữ cảnh tài liệu.nếu bạn không biết chỉ cần bạn trả lời không biết.BẮT BUỘC bằng TIẾNG VIỆT
+Ngữ cảnh:{context}
+Câu hỏi: {user_input}
 Trả lời (ngắn gọn 3-4 câu, bằng tiếng Việt): """
 
-    return f"""You are a helpful assistant. Below is document context.If you don't know the answer just response you don't know
-Context:{{context}}
-Question: {{user_input}}
+    return """You are a helpful assistant. Below is document context.If you don't know the answer just response you don't know
+Context:{context}
+Question: {user_input}
 Answer (concise 3-4 sentences): """
+
+
+def get_promt_with_memory(user_input):
+    vn_chars = "àáảãạăâèéêìíòóôơùúưỳýđịĩủũụừứặắằếềốồớờộỗỡ"
+    is_vn = any(c in user_input.lower() for c in vn_chars)
+
+    if is_vn:
+        return """Bạn là một trợ lý ảo thông minh. Dưới đây là ngữ cảnh tài liệu và lịch sử trò chuyện.nếu bạn không biết chỉ cần bạn trả lời không biết.BẮT BUỘC bằng TIẾNG VIỆT
+Lịch sử: {memory}
+Ngữ cảnh:{context}
+Câu hỏi: {user_input}
+Trả lời ngắn gọn 3-4 câu, bằng tiếng Việt"""
+
+    return """You are a helpful assistant. Below is document context and history chat.If you don't know the answer just response you don't know
+History: {memory}
+Context:{context}
+Question: {user_input}
+Answer concise 3-4 sentences"""
+
+
+def get_promt_memory_no_cont(user_input):
+    vn_chars = "àáảãạăâèéêìíòóôơùúưỳýđịĩủũụừứặắằếềốồớờộỗỡ"
+    is_vn = any(c in user_input.lower() for c in vn_chars)
+    if is_vn:
+        return """ Dưới đây là lịch sử trò chuyện
+Lịch sử: {memory}
+Câu hỏi: {user_input}
+Trả lời ngắn gọn 3-4 câu, bằng tiếng Việt"""
+    return """You are a helpful assistant. Below is history chat.If you don't know the answer just response you don't know
+History: {memory}
+Question: {user_input}
+Answer concise 3-4 sentences"""
 
 
 @st.cache_resource
