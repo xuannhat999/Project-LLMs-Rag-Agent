@@ -3,6 +3,7 @@ from langchain_ollama import OllamaLLM
 import requests
 import os
 import json
+from langchain_google_genai import ChatGoogleGenerativeAI
 
 CONFIG_FILE = "config.json"
 
@@ -64,3 +65,18 @@ def save_config(model_name, chunk_size, chunk_overlap):
             },
             f,
         )
+# THÊM: Hàm lấy mô hình mạnh hơn từ API cho CoRAG
+@st.cache_resource
+def get_external_model():
+    # Copy cái mã AIza... trong hình của bạn và dán vào đây
+    api_key = "AIzaSyBK5RkkBKqhP6r9q4O8wB9qwGPZY6LV_z0"
+    
+    try:
+        return ChatGoogleGenerativeAI(
+            model="gemini-flash-latest", # Model này rất nhanh và miễn phí
+            google_api_key=api_key,
+            temperature=0.1
+        )
+    except Exception as e:
+        st.error(f"Lỗi cấu hình Gemini: {e}")
+        return None
