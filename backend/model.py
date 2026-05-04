@@ -4,6 +4,11 @@ import requests
 import os
 import json
 from langchain_google_genai import ChatGoogleGenerativeAI
+from dotenv import load_dotenv
+
+load_dotenv()
+
+API_KEY = os.getenv("API_KEY")
 
 CONFIG_FILE = "config.json"
 
@@ -69,8 +74,8 @@ def save_config(model_name, chunk_size, chunk_overlap):
 @st.cache_resource
 def get_external_model():
     # Copy cái mã AIza... trong hình của bạn và dán vào đây
-    api_key = "AIzaSyBK5RkkBKqhP6r9q4O8wB9qwGPZY6LV_z0"
-    
+    api_key = API_KEY
+
     try:
         return ChatGoogleGenerativeAI(
             model="gemini-flash-latest", # Model này rất nhanh và miễn phí
