@@ -1,7 +1,13 @@
 import streamlit as st
 import time
 
-from backend.model import get_model, get_ollama_models, load_config_file, save_config
+from backend.model import (
+    get_api_model,
+    get_model,
+    get_ollama_models,
+    load_config_file,
+    save_config,
+)
 from backend.chain_rag import get_embedder
 from frontend.components.chatbox import render_chatbox
 from frontend.components.sidebar import render_sidebar
@@ -9,10 +15,7 @@ from frontend.components.sidebar import render_sidebar
 
 @st.cache_resource
 def init():
-    return (
-        get_embedder(),
-        get_model(),
-    )
+    return (get_embedder(), get_model(), get_api_model())
 
 
 def load_config(
@@ -59,13 +62,11 @@ else:
     config_data = load_config_file()
     load_config(config_data, models)
 
-embedder, model = init()
+embedder, model, api_model = init()
 
-st.set_page_config(
-    page_title="Test Streamlit UI - OSSD 2026", page_icon="🧪", layout="wide"
-)
+st.set_page_config(page_title="SmartDoc AI - OSSD 2026", layout="wide")
 
-st.title("Project LLMs-RAG-Agent")
+st.title("SnartDoc AI")
 render_sidebar(embedder=embedder)
 st.session_state.scroll = True
-render_chatbox(model=model)
+render_chatbox(model=model, api_model=api_model)

@@ -1,11 +1,9 @@
-import json
 import os
 import time
 import threading
 import tempfile
 import logging
 
-from numpy._core.multiarray import promote_types
 import streamlit as st
 from langchain_community.vectorstores import FAISS
 
@@ -38,7 +36,7 @@ def get_memory(data, k=5):
 def get_retriever(vector):
     faiss_retriever = vector.as_retriever(
         search_type="similarity",
-        search_kwargs={"k": 3},
+        search_kwargs={"k": 5},
     )
     return faiss_retriever
 
@@ -102,7 +100,7 @@ def extract_sources(docs):  # TRÍCH NGUỒN TỪ DOC
     return sources
 
 
-def process_query(vector_db, model, user_input):
+def process_query(vector_db, model, api_model, user_input):
     # Nếu có context từ doc:
     # return {
     #   "rag": Response của RAG,
@@ -197,8 +195,13 @@ def process_query(vector_db, model, user_input):
                         context=context, user_input=user_input
                     )
                 logger.info("CoRAG begin thinking...")
-                results["corag"] = model.invoke(prompt)
+                res = api_model.invoke(prompt)
 
+                final_text = getattr(res, "content", str(res))
+                if isinstance(final_text, list) and len(final_text) > 0:
+                    if isinstance(final_text[0], dict) and "text" in final_text[0]:
+                        final_text = final_text[0]["text"]
+                    results["corag"] = str(final_text).strip()
                 response_time_corag = time.time() - start_time
                 logger.info(f"Response time (CoRAG): {response_time_corag}")
                 logger.info(f"Response (CoRAG): {results['corag']}")

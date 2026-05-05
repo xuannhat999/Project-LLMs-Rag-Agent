@@ -3,6 +3,10 @@ from langchain_ollama import OllamaLLM
 import requests
 import os
 import json
+from langchain_google_genai import ChatGoogleGenerativeAI
+from dotenv import load_dotenv
+
+load_dotenv()
 
 CONFIG_FILE = "config.json"
 
@@ -63,9 +67,15 @@ def get_model():
             num_thread=6,
             num_ctx=2048,
             temperature=0.1,
+            num_gpu=35,
         )
         return model
     return None
+
+
+@st.cache_resource
+def get_api_model():
+    return ChatGoogleGenerativeAI(model="gemini-flash-latest", temperature=0.1)
 
 
 def get_ollama_models():

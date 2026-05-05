@@ -134,7 +134,7 @@ def scroll_and_focus():  # Cuộn xuống tin nhắn gần nhất và focus vào
 
 # --- GIAO DIỆN CHATBOX ---
 @st.fragment
-def render_chatbox(model):
+def render_chatbox(model, api_model):
     st.markdown(
         """
     <style>
@@ -296,7 +296,7 @@ def render_chatbox(model):
                 with st.spinner("Đang truy vấn dữ liệu và so sánh..."):
                     try:
                         scroll_and_focus()
-                        results = process_query(vector_db, model, user_input)
+                        results = process_query(vector_db, model, api_model, user_input)
 
                         # Hiển thị kết quả vào đúng cột
                         rag_area.markdown(
