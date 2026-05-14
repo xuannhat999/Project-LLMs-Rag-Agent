@@ -64,18 +64,12 @@ def get_model():
     if "selected_model" in st.session_state:
         model = OllamaLLM(
             model=st.session_state.selected_model,
-            num_thread=6,
+            num_thread=8,
             num_ctx=2048,
             temperature=0.1,
-            num_gpu=35,
         )
         return model
     return None
-
-
-@st.cache_resource
-def get_api_model():
-    return ChatGoogleGenerativeAI(model="gemini-flash-latest", temperature=0.1)
 
 
 def get_ollama_models():

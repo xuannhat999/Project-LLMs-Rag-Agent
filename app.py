@@ -15,7 +15,7 @@ from frontend.components.sidebar import render_sidebar
 
 @st.cache_resource
 def init():
-    return (get_embedder(), get_model(), get_api_model())
+    return (get_embedder(), get_model())
 
 
 def load_config(
@@ -62,11 +62,11 @@ else:
     config_data = load_config_file()
     load_config(config_data, models)
 
-embedder, model, api_model = init()
+embedder, model = init()
 
 st.set_page_config(page_title="SmartDoc AI - OSSD 2026", layout="wide")
 
 st.title("SnartDoc AI")
 render_sidebar(embedder=embedder)
 st.session_state.scroll = True
-render_chatbox(model=model, api_model=api_model)
+render_chatbox(model=model)

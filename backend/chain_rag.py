@@ -7,7 +7,6 @@ import logging
 import streamlit as st
 from langchain_community.vectorstores import FAISS
 
-# from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.embeddings import OpenVINOEmbeddings
 from backend.file_loader import load_document, split_text
 from backend.model import (
@@ -100,7 +99,7 @@ def extract_sources(docs):  # TRÍCH NGUỒN TỪ DOC
     return sources
 
 
-def process_query(vector_db, model, api_model, user_input):
+def process_query(vector_db, model, user_input):
     # Nếu có context từ doc:
     # return {
     #   "rag": Response của RAG,
@@ -152,19 +151,17 @@ def process_query(vector_db, model, api_model, user_input):
             logger.info("Started procces RAG !")
             context = "\n\n".join([doc.page_content for doc in related_docs])
             if memory:
-                print(memory)
                 prompt = get_promt_with_memory(user_input).format(
                     context=context, user_input=user_input, memory=memory
                 )
             else:
-                print("No memory")
                 prompt = get_promt_template(user_input).format(
                     context=context, user_input=user_input
                 )
             logger.info("RAG begin thinking...")
-            results["rag"] = model.invoke(prompt)
-
+            res = model.invoke(prompt)
             response_time_rag = time.time() - start_time
+            results["rag"] = f"{res}\nThời gian phản hồi: {response_time_rag:.2f}s"
             logger.info(f"Response time (RAG): {response_time_rag}")
             logger.info(f"Response (RAG): {results['rag']}")
 
@@ -183,9 +180,7 @@ def process_query(vector_db, model, api_model, user_input):
                     }
                     for d in validated_docs
                 ]
-                context = "\n\n".join(
-                    [d.page_content for d in validated_docs]
-                )  # .page_content vì giờ là object
+                context = "\n\n".join([d.page_content for d in validated_docs])
                 if memory:
                     prompt = get_promt_with_memory(user_input).format(
                         context=context, user_input=user_input, memory=memory
@@ -195,14 +190,17 @@ def process_query(vector_db, model, api_model, user_input):
                         context=context, user_input=user_input
                     )
                 logger.info("CoRAG begin thinking...")
-                res = api_model.invoke(prompt)
+                res = model.invoke(prompt)
 
-                final_text = getattr(res, "content", str(res))
-                if isinstance(final_text, list) and len(final_text) > 0:
-                    if isinstance(final_text[0], dict) and "text" in final_text[0]:
-                        final_text = final_text[0]["text"]
-                    results["corag"] = str(final_text).strip()
+                # final_text = getattr(res, "content", str(res))
+                # if isinstance(final_text, list) and len(final_text) > 0:
+                #     if isinstance(final_text[0], dict) and "text" in final_text[0]:
+                #         final_text = final_text[0]["text"]
+                #     results["corag"] = str(final_text).strip()
                 response_time_corag = time.time() - start_time
+                results["corag"] = (
+                    f"{res}\nThời gian phản hồi: {response_time_corag:.2f}s"
+                )
                 logger.info(f"Response time (CoRAG): {response_time_corag}")
                 logger.info(f"Response (CoRAG): {results['corag']}")
 
